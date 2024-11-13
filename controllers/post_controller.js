@@ -1,26 +1,35 @@
 const Post = require('../models/post_model');
 
 const addPost = async (req, res) => {
-  const { message, sender } = req.body; 
-  const post = new Post({message,sender});
+  const { message, sender } = req.body;
+  const post = new Post({ message, sender });
 
   try {
     const savedPost = await post.save();
-    res.json(savedPost); 
+    res.json(savedPost);
   } catch (error) {
-    res.status(500).json({ message: error.message }); 
+    res.status(500).json({ message: error.message });
   }
 };
 
-const getAll = async (req, res) => {
+const getPost = async (req, res) => {
+  const { sender } = req.query;
+
   try {
-    const posts = await Post.find();
+    let posts;
+    if (sender) {
+      // Fetch posts by sender if the 'sender' query parameter is provided
+      posts = await Post.find({ sender });
+    } else {
+      // Fetch all posts if no 'sender' query parameter is provided
+      posts = await Post.find();
+    }
+
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving posts', error });
   }
 };
-
 
 const getPostById = async (req, res) => {
   const { id } = req.params;
@@ -34,4 +43,5 @@ const getPostById = async (req, res) => {
   }
 }
 
-module.exports = { addPost , getAll, getPostById };
+
+module.exports = { addPost, getPost, getPostById };
