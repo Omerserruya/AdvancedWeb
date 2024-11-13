@@ -41,10 +41,10 @@ MONGODB_URL=mongodb://localhost:27017/your_database_name
 ```
 
 
-	•	PORT: The port on which your Node.js application will run.
-	•	MONGODB_URL: The connection URL for your MongoDB database.
+•	PORT: The port on which your Node.js application will run.
+•	MONGODB_URL: The connection URL for your MongoDB database.
 
-	Note: Ensure the .env file is added to your .gitignore to prevent it from being tracked by version control for security purposes.
+Note: Ensure the .env file is added to your .gitignore to prevent it from being tracked by version control for security purposes.
 
 **Running the Application**
 
