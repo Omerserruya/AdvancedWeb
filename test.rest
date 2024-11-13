@@ -29,3 +29,8 @@ Content-Type: application/json
   "message": "good night!"
 }
 
+### GET Request to get Post by ID
+GET http://localhost:3000/post/6735095ee481862a8af9de0d
+
+### GET Request to get Post by ID
+GET http://localhost:3000/post/673504d960686e57ed0be4a1 

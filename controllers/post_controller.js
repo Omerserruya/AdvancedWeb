@@ -12,4 +12,16 @@ const addPost = async (req, res) => {
   }
 };
 
-module.exports = { addPost };
+const getPostById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+    res.json(post);
+  }
+  catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+module.exports = { addPost , getPostById };
