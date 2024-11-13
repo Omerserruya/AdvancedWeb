@@ -7,7 +7,7 @@ POST http://localhost:3000/post
 Content-Type: application/json
 
 {
-  "message": "Post 1",
+  "message": "Post 2",
   "sender": "123456"
 }
 
@@ -29,6 +29,17 @@ Content-Type: application/json
   "message": "good night!"
 }
 
+
+### GET Request to Fetch All Posts (valid request, should return all posts)
+GET http://localhost:3000/post
+Content-Type: application/json
+
+
+### GET Request to Fetch a Specific Post by ID (nonexistent ID, should return error)
+GET http://localhost:3000/post/6467c8d5f5a2d3c1e0f9b999
+Content-Type: application/json
+
+
 ### GET Request to get Post by ID
 GET http://localhost:3000/post/6735095ee481862a8af9de0d
 
@@ -37,3 +48,4 @@ GET http://localhost:3000/post/673504d960686e57ed0be4a1
 
 ### GET Request to get Post by ID(Invalid ID) will return error
 GET http://localhost:3000/post/673504d960686e57ed0e4a1 
+
