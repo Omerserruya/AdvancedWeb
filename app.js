@@ -1,0 +1,29 @@
+require('dotenv').config();
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const port = process.env.PORT;
+const mongoDBUrl = process.env.MONGODB_URL;
+
+const app = express();
+mongoose.connect(mongoDBUrl)
+
+const db = mongoose.connection
+db.on('error',error=>{console.log(error)})
+db.on('connected',()=>{console.log(`[ ${new Date().toISOString()} ] Connected Succefuly to MongoDB`)})
+
+// Routes Import
+const healthRoute = require('./routes/health_route')
+
+// Routes Use
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
+
+app.use('/health',healthRoute)
+
+app.listen(port, () => {
+  console.log(`[ ${new Date().toISOString()} ] Server is running on http://localhost:${port}`);
+});
