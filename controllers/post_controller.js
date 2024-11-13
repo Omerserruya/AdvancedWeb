@@ -22,7 +22,16 @@ const getAll = async (req, res) => {
 };
 
 
-module.exports = { 
-  addPost,
-  getAll
- };
+const getPostById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+    res.json(post);
+  }
+  catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+module.exports = { addPost , getAll, getPostById };
