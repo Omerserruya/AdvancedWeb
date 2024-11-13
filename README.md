@@ -22,8 +22,8 @@ This project is set up to run a Node.js application with MongoDB using a develop
    Once inside the dev container, clone the repository:
 
    ```bash
-   git clone <repository_url>
-   cd <repository_name>
+   git clone https://github.com/Omerserruya/AdvancedWeb.git
+   cd AdvancedWeb
    ```
 
 
@@ -36,19 +36,33 @@ This project is set up to run a Node.js application with MongoDB using a develop
 Before running the project, you must create a `.env` file in the root directory. This file should contain the following environment variables:
 
 ```plaintext
-PORT=3000             # or any port number you prefer
-MONGODB_URL=mongodb://localhost:27017/your_database_name
+PORT = replace_this_with_number_port             # or any port number you prefer
+MONGODB_URL = "mongodb://your_mongo_db"
 ```
 
 
 - PORT: The port on which your Node.js application will run.
 - MONGODB_URL: The connection URL for your MongoDB database.
 
-Note: Ensure the .env file is added to your .gitignore to prevent it from being tracked by version control for security purposes.
+> [!NOTE]
+> Ensure the .env file is added to your .gitignore to prevent it from being tracked by version control for security purposes.
+
+**Install dependencies**
+
+Before running the project, you must insttall all dependencies by the next command:
+```bash 
+npm install
+```
 
 **Running the Application**
 
 Once the environment is set up, you can start the application by running:
+
 ```bash 
 npm start
 ```
+
+
+**For Testing the Rest API**
+
+install the ```REST CLIENT``` VS Code Extention
