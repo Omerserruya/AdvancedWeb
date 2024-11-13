@@ -12,4 +12,17 @@ const addPost = async (req, res) => {
   }
 };
 
-module.exports = { addPost };
+const getAll = async (req, res) => {
+  try {
+    const posts = await Post.find();
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving posts', error });
+  }
+};
+
+
+module.exports = { 
+  addPost,
+  getAll
+ };
