@@ -2,4 +2,30 @@
 ###
 GET http://localhost:3000/health
 
-###
+###POST Request to Create Post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+  "message": "Post 1",
+  "sender": "123456"
+}
+
+### POST Request to Create Post (empty required variable) will return error
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+  "message": "",
+  "sender": "345678"
+}
+
+
+### POST Request to Create Post (without required variable) will return error
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+  "message": "good night!"
+}
+
