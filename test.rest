@@ -62,3 +62,31 @@ Content-Type: application/json
 ### GET Request to Fetch All Posts by Sender ID (nonexistent sender, should return empty array or error)
 GET http://localhost:3000/post?sender=999999
 Content-Type: application/json
+
+### PUT Request to Update Post by ID
+PUT http://localhost:3000/post/6735095ee481862a8af9de0d
+Content-Type: application/json
+
+{
+  "message": "Post 5",
+  "sender": "176345"
+}
+
+
+### PUT Request to Update Post by ID (without required variable, should return error)
+PUT http://localhost:3000/post/6735095ee481862a8af9de0d
+Content-Type: application/json
+
+{
+  "message": "Post 5"
+}
+
+
+### PUT Request to Update Post by ID (nonexistent ID, should return error)
+PUT http://localhost:3000/post/6735095ee481862a8af9de0
+Content-Type: application/json
+
+{
+  "message": "Post 5",
+  "sender": "176345"
+}
