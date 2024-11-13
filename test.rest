@@ -34,3 +34,6 @@ GET http://localhost:3000/post/6735095ee481862a8af9de0d
 
 ### GET Request to get Post by ID
 GET http://localhost:3000/post/673504d960686e57ed0be4a1 
+
+### GET Request to get Post by ID(Invalid ID) will return error
+GET http://localhost:3000/post/673504d960686e57ed0e4a1 
