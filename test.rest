@@ -11,56 +11,15 @@ Content-Type: application/json
   "sender": "123456"
 }
 
-### POST Request to Create Post (empty required variable) will return error
-POST http://localhost:3000/post
-Content-Type: application/json
-
-{
-  "message": "",
-  "sender": "345678"
-}
-
-
-### POST Request to Create Post (without required variable) will return error
-POST http://localhost:3000/post
-Content-Type: application/json
-
-{
-  "message": "good night!"
-}
-
-
 ### GET Request to Fetch All Posts (valid request, should return all posts)
 GET http://localhost:3000/post
 Content-Type: application/json
 
-
-### GET Request to Fetch a Specific Post by ID (nonexistent ID, should return error)
-GET http://localhost:3000/post/6467c8d5f5a2d3c1e0f9b999
-Content-Type: application/json
-
-
 ### GET Request to get Post by ID
 GET http://localhost:3000/post/6735095ee481862a8af9de0d
 
-### GET Request to get Post by ID
-GET http://localhost:3000/post/673504d960686e57ed0be4a1 
-
-### GET Request to get Post by ID(Invalid ID) will return error
-GET http://localhost:3000/post/673504d960686e57ed0e4a1 
-
 ### GET Request to Fetch All Posts by Sender ID (valid sender, should return posts for sender 123456)
 GET http://localhost:3000/post?sender=123456
-Content-Type: application/json
-
-
-### GET Request to Fetch All Posts by Sender ID (another valid sender, should return posts for sender 654321)
-GET http://localhost:3000/post?sender=654321
-Content-Type: application/json
-
-
-### GET Request to Fetch All Posts by Sender ID (nonexistent sender, should return empty array or error)
-GET http://localhost:3000/post?sender=999999
 Content-Type: application/json
 
 ### PUT Request to Update Post by ID
@@ -72,21 +31,11 @@ Content-Type: application/json
   "sender": "176345"
 }
 
-
-### PUT Request to Update Post by ID (without required variable, should return error)
-PUT http://localhost:3000/post/6735095ee481862a8af9de0d
+### Post a comment
+POST http://localhost:3000/post/6735134c982b40e6333ea2ac/comments
 Content-Type: application/json
 
 {
-  "message": "Post 5"
-}
-
-
-### PUT Request to Update Post by ID (nonexistent ID, should return error)
-PUT http://localhost:3000/post/6735095ee481862a8af9de0
-Content-Type: application/json
-
-{
-  "message": "Post 5",
-  "sender": "176345"
+  "userID": "123456",
+  "text":"not goods"
 }
