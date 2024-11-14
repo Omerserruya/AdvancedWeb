@@ -1,6 +1,6 @@
-const moongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-const postSchema = new moongoose.Schema({
+const postSchema = new mongoose.Schema({
     message: {
         type: String,
         required: true
@@ -10,4 +10,4 @@ const postSchema = new moongoose.Schema({
         required: true
     }
 });
-module.exports = moongoose.model('Post', postSchema);
+module.exports = mongoose.model('Post', postSchema);
