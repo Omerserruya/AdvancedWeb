@@ -39,3 +39,5 @@ Content-Type: application/json
   "userID": "123456",
   "text":"not goods"
 }
+### get comments of post
+GET  http://localhost:3000/post/6735134c982b40e6333ea2ac/comments

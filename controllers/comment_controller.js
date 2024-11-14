@@ -20,5 +20,22 @@ const createComment = async (req, res) => {
   }
 };
 
+const getComments = async (req, res) => {
+  const { postID } = req.params;
 
-module.exports = { createComment };
+  try {
+    let comments;
+    const post = await Post.findById(postID);
+    if
+    (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    comments =  await Comment.find({ postID });
+    res.status(200).json(comments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving comments', error });
+  }
+};
+
+
+module.exports = { createComment , getComments };
