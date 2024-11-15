@@ -11,6 +11,7 @@ router.put('/:id', Post.updatePost);
 
 router.post('/:postID/comments', Comment.createComment); 
 router.get('/:postID/comments', Comment.getComments); 
+router.put('/:postID/comments/:commentID', Comment.updateComment);
 
 module.exports = router;
   
