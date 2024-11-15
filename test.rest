@@ -40,4 +40,15 @@ Content-Type: application/json
   "text":"not goods"
 }
 ### get comments of post
-GET  http://localhost:3000/post/6735134c982b40e6333ea2ac/comments
+GET  http://localhost:3000/post/6735095ee481862a8af9de0d/comments
+
+###update comment of post
+PUT  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/67374f3b1979bca2a9b20a9b
+Content-Type: application/json
+
+{
+  "text":"Good"
+}
+
+
+
