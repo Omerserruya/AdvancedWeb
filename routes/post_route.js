@@ -8,7 +8,9 @@ router.post('/', Post.addPost);
 router.get('/', Post.getPost);
 router.get('/:id', Post.getPostById);
 router.put('/:id', Post.updatePost);
+
 router.post('/:postID/comments', Comment.createComment); 
+router.get('/:postID/comments', Comment.getComments); 
 
 module.exports = router;
   
