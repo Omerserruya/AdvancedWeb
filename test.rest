@@ -32,7 +32,7 @@ Content-Type: application/json
 }
 
 ### Post a comment
-POST http://localhost:3000/post/6735134c982b40e6333ea2ac/comments
+POST http://localhost:3000/post/6735095ee481862a8af9de0d/comments
 Content-Type: application/json
 
 {
@@ -43,12 +43,14 @@ Content-Type: application/json
 GET  http://localhost:3000/post/6735095ee481862a8af9de0d/comments
 
 ###update comment of post
-PUT  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/67374f3b1979bca2a9b20a9b
+PUT  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/673756f70c05079bdd91636c
 Content-Type: application/json
 
 {
   "text":"Good"
 }
 
+###delete comment of post
+DELETE  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/673756fa0c05079bdd916372
 
 
