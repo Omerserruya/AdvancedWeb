@@ -24,15 +24,11 @@ const createComment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             res.status(404).json({ message: 'Post not found' });
         }
         else {
-            if (!body.content) {
-                res.status(400).json({ message: 'Text is required' });
-            }
             const savedComment = yield comment_model_2.default.create({ postID: postID, userID: body.userID, content: body.content });
             res.status(201).json(savedComment);
         }
     }
     catch (error) {
-        console.log(error);
         res.status(500).json(error);
     }
 });

@@ -30,13 +30,13 @@ const getPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const posts = yield post_model_1.default.find({ userID: filter });
             res.send(posts);
         }
-        else {
+        else if (!filter) {
             const posts = yield post_model_1.default.find();
             res.send(posts);
         }
     }
     catch (error) {
-        res.status(400).send(error);
+        res.status(500).send(error);
     }
 });
 const getPostById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

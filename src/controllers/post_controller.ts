@@ -17,12 +17,12 @@ const getPost = async (req: Request, res: Response) => {
     if (filter) {
       const posts = await postModel.find({ userID: filter });
       res.send(posts);
-    } else {
+    } else if (!filter) {
       const posts = await postModel.find();
       res.send(posts);
     }
   } catch (error) {
-    res.status(400).send(error);
+    res.status(500).send(error);
   }
 };
 

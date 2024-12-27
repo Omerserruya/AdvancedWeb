@@ -14,14 +14,10 @@ const createComment = async (req: Request, res: Response) => {
       (!post) {
       res.status(404).json({ message: 'Post not found' });
     } else {
-      if (!body.content) {
-        res.status(400).json({ message: 'Text is required' });
-      }
       const savedComment = await commentModel.create({ postID: postID, userID: body.userID, content: body.content });
       res.status(201).json(savedComment);
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json(error);
   }
 };
