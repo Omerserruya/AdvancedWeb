@@ -1,0 +1,55 @@
+
+###
+GET http://localhost:3000/health
+
+###POST Request to Create Post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+  "message": "Post 2",
+  "userID": "123456"
+}
+
+### GET Request to Fetch All Posts (valid request, should return all posts)
+GET http://localhost:3000/post
+Content-Type: application/json
+
+### GET Request to get Post by ID
+GET http://localhost:3000/posts/676e7335b528e73e4d1f0d74
+
+### GET Request to Fetch All Posts by Sender ID (valid userID, should return posts for userID 123456)
+GET http://localhost:3000/post?userID=123456
+Content-Type: application/json
+
+### PUT Request to Update Post by ID
+PUT http://localhost:3000/posts/676e7335b528e73e4d1f0d74
+Content-Type: application/json
+
+{
+  "message": "Post 5",
+  "userID": "176345"
+}
+
+### Post a comment
+POST http://localhost:300/posts/676ebe5acfa4f68e40cf4a33/comments
+Content-Type: application/json
+
+{
+  "userID": "123456",
+  "content":"not goods"
+}
+### get comments of post
+GET  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments
+
+###update comment of post
+PUT  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments/676e736cb528e73e4d1f0d7d
+Content-Type: application/json
+
+{
+  "content":"Good"
+}
+
+###delete comment of post
+DELETE  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments/676e736cb528e73e4d1f0d7d
+
