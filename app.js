@@ -19,7 +19,7 @@ db.on('connected',()=>{console.log(`[ ${new Date().toISOString()} ] Connected Su
 
 // Routes Import
 const healthRoute = require('./routes/health_route')
-const postRoute = require('./routes/post_route')
+const postsRoute = require('./routes/post_route')
 
 // Routes Use
 app.get('/', (req, res) => {
@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/health',healthRoute)
-app.use('/post',postRoute)
+app.use('/posts',postsRoute)
 
 app.listen(port, () => {
   console.log(`[ ${new Date().toISOString()} ] Server is running on http://localhost:${port}`);

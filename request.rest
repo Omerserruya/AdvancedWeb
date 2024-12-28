@@ -3,54 +3,61 @@
 GET http://localhost:3000/health
 
 ###POST Request to Create Post
-POST http://localhost:3000/post
+POST http://localhost:3000/posts
 Content-Type: application/json
 
 {
-  "message": "Post 2",
-  "sender": "123456"
+  "content": "This is Post 1",  
+  "userID":"123456"
 }
 
 ### GET Request to Fetch All Posts (valid request, should return all posts)
-GET http://localhost:3000/post
+GET http://localhost:3000/posts
 Content-Type: application/json
 
 ### GET Request to get Post by ID
-GET http://localhost:3000/post/6735095ee481862a8af9de0d
+GET http://localhost:3000/posts/676fc94c89d0609a0b797952
 
 ### GET Request to Fetch All Posts by Sender ID (valid sender, should return posts for sender 123456)
-GET http://localhost:3000/post?sender=123456
+GET http://localhost:3000/posts?userID=123456
 Content-Type: application/json
 
 ### PUT Request to Update Post by ID
-PUT http://localhost:3000/post/6735095ee481862a8af9de0d
+PUT http://localhost:3000/posts/676fc94c89d0609a0b797952
 Content-Type: application/json
 
 {
-  "message": "Post 5",
-  "sender": "176345"
+  "content": "This is Edited Post 1"
 }
 
+### DELETE Request to Delete Post by ID
+DELETE http://localhost:3000/posts/676fc94c89d0609a0b797952
+
+
+
 ### Post a comment
-POST http://localhost:3000/post/6735095ee481862a8af9de0d/comments
+POST http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
 Content-Type: application/json
 
 {
   "userID": "123456",
-  "text":"not goods"
+  "content":"not goods"
 }
 ### get comments of post
-GET  http://localhost:3000/post/6735095ee481862a8af9de0d/comments
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
+
+###get comment by id
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments/676fcbd4f2741262b07c2260
 
 ###update comment of post
-PUT  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/673756f70c05079bdd91636c
+PUT  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
 Content-Type: application/json
 
 {
-  "text":"Good"
+  "content":"Good"
 }
 
 ###delete comment of post
-DELETE  http://localhost:3000/post/6735095ee481862a8af9de0d/comments/673756fa0c05079bdd916372
+DELETE  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
 
 
