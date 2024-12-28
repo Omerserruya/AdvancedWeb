@@ -1,8 +1,8 @@
 const Post = require('../models/post_model');
 
 const addPost = async (req, res) => {
-  const { message, sender } = req.body;
-  const post = new Post({ message, sender });
+  const body = req.body;
+  const post = new Post(body);
 
   try {
     const savedPost = await post.save();
@@ -13,13 +13,13 @@ const addPost = async (req, res) => {
 };
 
 const getPost = async (req, res) => {
-  const { sender } = req.query;
+  const { userID } = req.query;
 
   try {
     let posts;
-    if (sender) {
+    if (userID) {
       // Fetch posts by sender if the 'sender' query parameter is provided
-      posts = await Post.find({ sender });
+      posts = await Post.find({ userID });
     } else {
       // Fetch all posts if no 'sender' query parameter is provided
       posts = await Post.find();
@@ -45,7 +45,7 @@ const getPostById = async (req, res) => {
 
 const updatePost = async (req, res) => { 
   const { id } = req.params;
-  const { message, sender } = req.body;
+  const { content } = req.body;
 
   try {
     const post = await Post.findById(id);
@@ -53,8 +53,7 @@ const updatePost = async (req, res) => {
     (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    post.message = message;
-    post.sender = sender;
+    post.content = content;
     const updatedPost = await post.save();
     res.json(updatedPost);
   }
@@ -63,5 +62,15 @@ const updatePost = async (req, res) => {
   }
 }
 
+const deletePost = async (req, res) => {
+  const postId = req.params.id;
+  try {
+    const rs = await Post.findByIdAndDelete(postId);
+    res.status(200).send(rs);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
 
-module.exports = { addPost, getPost, getPostById , updatePost };
+
+module.exports = { addPost, getPost, getPostById , updatePost , deletePost};

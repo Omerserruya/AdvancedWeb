@@ -3,9 +3,9 @@ const Post = require('../models/post_model');
 
 const createComment = async (req, res) => {
   const { postID } = req.params;
-  const { userID, text } = req.body;
+  const { userID, content } = req.body;
 
-  const comment = new Comment({ postID, userID, text });
+  const comment = new Comment({ postID, userID, content });
   try {
     const post = await Post.findById(postID);
     if
@@ -39,14 +39,14 @@ const getComments = async (req, res) => {
 
 const updateComment = async (req, res) => {
   const {commentID} = req.params;
-  const { text } = req.body;
+  const { content } = req.body;
   try {
     const comment = await Comment.findById(commentID)
     if
     (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
-    comment.text = text;
+    comment.content = content;
     const updatedComment = await comment.save();
     res.json(updatedComment);
   }
