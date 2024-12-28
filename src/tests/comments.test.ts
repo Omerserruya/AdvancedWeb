@@ -139,12 +139,12 @@ describe("Comments Tests", () => {
         const response2 = await request(app).get("/posts/" + postId + "/comments/" + commentId);
         expect(response2.statusCode).toBe(404);
     });
-    test("Test faile to Delete comment", async () => {
+    test("Test fail to Delete comment", async () => {
         const response = await request(app).delete("/posts/" + postId + "/comments/" + commentId);
         expect(response.statusCode).toBe(404);
     });
 
-    test("Test faile to delete comment by id", async () => {
+    test("Test fail to delete comment by id", async () => {
         const response = await request(app).delete("/posts/" + postId + "/comments/" + null);
         expect(response.statusCode).toBe(500);
     });
