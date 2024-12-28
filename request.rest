@@ -2,54 +2,60 @@
 ###
 GET http://localhost:3000/health
 
-###POST Request to Create Post
-POST http://localhost:3000/post
+### POST Request to Create User (valid request, should return user object)
+POST http://localhost:3000/posts
 Content-Type: application/json
 
 {
-  "message": "Post 2",
-  "userID": "123456"
+  "content": "This is Post 1",  
+  "userID":"123456"
 }
 
 ### GET Request to Fetch All Posts (valid request, should return all posts)
-GET http://localhost:3000/post
+GET http://localhost:3000/posts
 Content-Type: application/json
 
 ### GET Request to get Post by ID
-GET http://localhost:3000/posts/676e7335b528e73e4d1f0d74
+GET http://localhost:3000/posts/676fc94c89d0609a0b797952
 
 ### GET Request to Fetch All Posts by Sender ID (valid userID, should return posts for userID 123456)
-GET http://localhost:3000/post?userID=123456
+GET http://localhost:3000/posts?userID=123456
 Content-Type: application/json
 
 ### PUT Request to Update Post by ID
-PUT http://localhost:3000/posts/676e7335b528e73e4d1f0d74
+PUT http://localhost:3000/posts/676fc94c89d0609a0b797952
 Content-Type: application/json
 
 {
-  "message": "Post 5",
-  "userID": "176345"
+  "content": "This is Edited Post 1"
 }
 
+### DELETE Request to Delete Post by ID
+DELETE http://localhost:3000/posts/676fc94c89d0609a0b797952
+
 ### Post a comment
-POST http://localhost:300/posts/676ebe5acfa4f68e40cf4a33/comments
+POST http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
 Content-Type: application/json
 
 {
   "userID": "123456",
   "content":"not goods"
 }
-### get comments of post
-GET  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments
+### Get comments of post
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
 
-###update comment of post
-PUT  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments/676e736cb528e73e4d1f0d7d
+###Get comment by id
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments/676fcbd4f2741262b07c2260
+
+###Update comment of post
+PUT  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
 Content-Type: application/json
 
 {
   "content":"Good"
 }
 
-###delete comment of post
-DELETE  http://localhost:3000/posts/676e7335b528e73e4d1f0d74/comments/676e736cb528e73e4d1f0d7d
+###Delete comment of post
+DELETE  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
+
 
