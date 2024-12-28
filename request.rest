@@ -36,7 +36,7 @@ DELETE http://localhost:3000/posts/676fc94c89d0609a0b797952
 
 
 ### Post a comment
-POST http://localhost:3000/posts/676fc94c89d0609a0b797952/comments
+POST http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
 Content-Type: application/json
 
 {
@@ -44,7 +44,10 @@ Content-Type: application/json
   "content":"not goods"
 }
 ### get comments of post
-GET  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
+
+###get comment by id
+GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments/676fcbd4f2741262b07c2260
 
 ###update comment of post
 PUT  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
