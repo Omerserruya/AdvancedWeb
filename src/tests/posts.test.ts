@@ -30,22 +30,22 @@ describe("Posts Tests", () => {
     const response = await request(app).post("/posts").send({
       title: "Test Post",
       content: "Test Content",
-      userID: "TestOwner",
+      userID: "676fc94c89d0609a0b797952",
     });
     expect(response.statusCode).toBe(201);
     expect(response.body.title).toBe("Test Post");
     expect(response.body.content).toBe("Test Content");
-    expect(response.body.userID).toBe("TestOwner");
+    expect(response.body.userID).toBe("676fc94c89d0609a0b797952");
     postId = response.body._id;
   });
 
   test("Test get post by userID", async () => {
-    const response = await request(app).get("/posts?userID=TestOwner");
+    const response = await request(app).get("/posts?userID=676fc94c89d0609a0b797952");
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(1);
     expect(response.body[0].title).toBe("Test Post");
     expect(response.body[0].content).toBe("Test Content");
-    expect(response.body[0].userID).toBe("TestOwner");
+    expect(response.body[0].userID).toBe("676fc94c89d0609a0b797952");
   });
 
   test("Test get post by id", async () => {
@@ -53,14 +53,14 @@ describe("Posts Tests", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.title).toBe("Test Post");
     expect(response.body.content).toBe("Test Content");
-    expect(response.body.userID).toBe("TestOwner");
+    expect(response.body.userID).toBe("676fc94c89d0609a0b797952");
   });
 
   test("Test Create Post 2", async () => {
     const response = await request(app).post("/posts").send({
       title: "Test Post 2",
       content: "Test Content 2",
-      userID: "TestOwner2",
+      userID: "676fc94c89d0609a0b797952",
     });
     expect(response.statusCode).toBe(201);
   });

@@ -3,12 +3,43 @@
 GET http://localhost:3000/health
 
 ### POST Request to Create User (valid request, should return user object)
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "username": "jhondoe",  
+  "password":"123456",
+  "email":"jhondoe@example.com"
+}
+
+### GET Request to Fetch All Users (valid request, should return all posts)
+GET http://localhost:3000/users
+Content-Type: application/json
+
+### GET Request to get User by ID
+GET http://localhost:3000/users/677026b7ad973b9da0e90ab1
+
+### PUT Request to Update User by ID
+PUT http://localhost:3000/users/677026b7ad973b9da0e90ab1
+Content-Type: application/json
+
+{
+  "username": "janedoe",  
+  "password":"1234567",
+  "email":"janedoe@example.com"
+}
+
+### DELETE Request to Delete User by ID
+DELETE http://localhost:3000/users/677026b7ad973b9da0e90ab1
+
+### POST Request to Create Post (valid request, should return user object)
 POST http://localhost:3000/posts
 Content-Type: application/json
 
 {
+  "title": "Post 1",
   "content": "This is Post 1",  
-  "userID":"123456"
+  "userID":"677026cbad973b9da0e90ab9"
 }
 
 ### GET Request to Fetch All Posts (valid request, should return all posts)
@@ -16,14 +47,14 @@ GET http://localhost:3000/posts
 Content-Type: application/json
 
 ### GET Request to get Post by ID
-GET http://localhost:3000/posts/676fc94c89d0609a0b797952
+GET http://localhost:3000/posts/677026822521efce0b2e0e15
 
 ### GET Request to Fetch All Posts by Sender ID (valid userID, should return posts for userID 123456)
-GET http://localhost:3000/posts?userID=123456
+GET http://localhost:3000/posts?userID=677026cbad973b9da0e90ab9
 Content-Type: application/json
 
 ### PUT Request to Update Post by ID
-PUT http://localhost:3000/posts/676fc94c89d0609a0b797952
+PUT http://localhost:3000/posts/677026d4ad973b9da0e90abb
 Content-Type: application/json
 
 {
@@ -31,24 +62,24 @@ Content-Type: application/json
 }
 
 ### DELETE Request to Delete Post by ID
-DELETE http://localhost:3000/posts/676fc94c89d0609a0b797952
+DELETE http://localhost:3000/posts/677026a9ad973b9da0e90aaf
 
 ### Post a comment
-POST http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
+POST http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments
 Content-Type: application/json
 
 {
-  "userID": "123456",
+  "userID": "67701dd87deb50b9c16c0299",
   "content":"not goods"
 }
 ### Get comments of post
-GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments
+GET  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments
 
 ###Get comment by id
-GET  http://localhost:3000/posts/676fcbc7f2741262b07c225e/comments/676fcbd4f2741262b07c2260
+GET  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
 
 ###Update comment of post
-PUT  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
+PUT  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
 Content-Type: application/json
 
 {
@@ -56,6 +87,6 @@ Content-Type: application/json
 }
 
 ###Delete comment of post
-DELETE  http://localhost:3000/posts/676fc94c89d0609a0b797952/comments/676fc9a317b1839ad0188e0b
+DELETE  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
 
 
