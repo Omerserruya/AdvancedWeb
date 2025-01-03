@@ -56,6 +56,7 @@ describe("Users Tests", () => {
       username: "TestUserFail",
       email: "testuserfail@example.com",
     });
+
     expect(response.statusCode).toBe(400); // Missing password
     expect(response.body.message).toBe("Username, email, and password are required");
   
@@ -70,6 +71,7 @@ describe("Users Tests", () => {
       email: "testuserfail3@example.com",
       password: "password123",
     });
+    
     expect(response3.statusCode).toBe(400); // Missing username
     expect(response3.body.message).toBe("Username, email, and password are required");
   });
@@ -81,7 +83,7 @@ describe("Users Tests", () => {
     });
   
     const response = await request(app).post("/users")
-      .send({ username: "testuser", email: "testuser@example.com", password: "password123" });
+      .send({ username: "testuser3543", email: "testuser3545@example.com", password: "password123" });
   
     // Verify that the response is a 500 error, as we mocked a server-side issue
     expect(response.statusCode).toBe(500);
@@ -129,7 +131,6 @@ describe("Users Tests", () => {
   });
 
   
-
   test("Test Update User", async () => {
     const response = await request(app).put("/users/" + userId).send({
       username: "UpdatedUser",
@@ -176,7 +177,6 @@ describe("Users Tests", () => {
     expect(response.body.username).toBe("UpdatedUserWithPassword");
     expect(response.body.email).toBe("updateduserpassword@example.com");
   });
-  
 
   // Test: Fail when user not found
   test("Test Update User fail - user not found", async () => {

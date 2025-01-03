@@ -1,6 +1,8 @@
 import userModel from "../models/user_model";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+
 // Function to add a new user
 const addUser = async (req: Request, res: Response) => {
   const { username, email, password, role } = req.body;
@@ -10,11 +12,17 @@ const addUser = async (req: Request, res: Response) => {
     res.status(400).json({ message: "Username, email, and password are required" });
     return;
   }
-
   try {
-    const user = new userModel({ username, email, password, role });
-    await user.save();
-    res.status(201).json(user);
+    if( await userModel.findOne({email}) || await userModel.findOne({ username})){
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }else{
+      const encryptedPassword = await bcrypt.hash(password, 10);
+      const lowerEmail = email.toLowerCase() as string;
+      const user = new userModel({username: username, email: lowerEmail, password: encryptedPassword,role: role });
+      await user.save();
+      res.status(201).json(user);
+    }
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: "Error creating user", error: error.message });
@@ -77,16 +85,16 @@ const deleteUser = async (req: Request, res: Response) => {
 // Function to update a user
 const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { username, email, password, role }: { 
+    const { username, email, password }: { 
       username?: string; 
       email?: string; 
       password?: string; 
-      role?: "user" | "admin"; 
     } = req.body;
 
     try {
       // Find the user by ID
       const user = await userModel.findById(id);
+
       if (!user) {
         res.status(404).json({ message: "User not found" });
       } else if (Object.keys(req.body).length === 0) {
@@ -94,25 +102,21 @@ const updateUser = async (req: Request, res: Response) => {
           message: "At least one field (e.g., username, email) is required to update",
         });
       } else {
-        // Prepare the update data using the body and preserve existing data if not provided
-        const updatedUserData: Partial<{
-          username: string;
-          email: string;
-          password: string;
-          role: "user" | "admin";
-        }> = {
-          username: username || user.username,
-          email: email || user.email,
-          role: role || user.role,
-        };
+
 
         // If password is provided in the request, include it in the update
+        let encryptedPassword = user.password;
         if (password) {
-          updatedUserData.password = password;
+          encryptedPassword = await bcrypt.hash(password, 10);
         }
 
+
         // Update the user with the new data
-        const updatedUser = await userModel.findByIdAndUpdate(id, updatedUserData, { new: true });
+        const updatedUser = await userModel.findByIdAndUpdate(id, {
+          username: username || user.username,
+          email: email || user.email,
+          password: encryptedPassword,
+        }, { new: true });
 
         // Handle case where update fails
         if (!updatedUser) {

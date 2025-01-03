@@ -7,6 +7,7 @@ import express, { Express } from "express";
 import postsRoute from "./routes/post_route";
 import healthRoute from "./routes/health_route";
 import usersRoute from "./routes/user_route";
+import authRoute from "./routes/auth_route";
 
 const app = express();
 app.use(bodyParser.json());
@@ -18,6 +19,7 @@ db.on('connected',()=>{console.log(`[ ${new Date().toISOString()} ] Connected Su
 
 // Routes Use
 app.use('/health',healthRoute)
+app.use('/auth',authRoute)
 app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
 
