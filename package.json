@@ -4,10 +4,10 @@
   "description": "Advanced Web Development",
   "main": "index.js",
   "scripts": {
-    "test": "tsc && jest --detectOpenHandles --forceExit  --coverage",
+    "test": "tsc && NODE_ENV=test jest --detectOpenHandles --forceExit  --coverage",
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
-    "devstart": "nodemon ./src/app.ts"
+    "devstart": "NODE_ENV=dev nodemon ./src/app.ts"
   },
   "keywords": [],
   "author": "",

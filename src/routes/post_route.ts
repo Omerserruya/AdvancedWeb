@@ -2,9 +2,10 @@ import express from "express";
 const postsRoute = express.Router();
 import postsController from "../controllers/post_controller";
 import Comment from "../controllers/comment_controller";   
+import  { authentification } from "../controllers/auth_controller";
 
 postsRoute.post('/', postsController.addPost);
-postsRoute.get('/', postsController.getPost);
+postsRoute.get('/' ,postsController.getPost);
 postsRoute.get('/:id', postsController.getPostById);
 postsRoute.put('/:id', postsController.updatePost);
 postsRoute.delete('/:id', postsController.deletePost);
