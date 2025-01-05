@@ -89,4 +89,35 @@ Content-Type: application/json
 ###Delete comment of post
 DELETE  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
 
+#### Test Register
+POST http://localhost:3000/auth/register
+Content-Type: application/json
 
+{
+  "username": "jhondoe",  
+  "password":"123456",
+  "email":"test@email.com"
+}
+
+#### Test Login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@email.com", 
+  "password":"123456"
+}
+
+### Test logout
+POST  http://localhost:3000/auth/logout
+Content-Type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAxOTMwLCJleHAiOjE3MzYxMDU1MzB9.Rm7r5NgziIxm9Z9zGG7VZpAMR6MJNghwLGaUvy0X4zU eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAxOTMwLCJleHAiOjE3MzY3MDY3MzB9.ZeTzo_k5xOkSs-YZrX-BeiIOrJsIRQrgITj9amNCtPs
+
+### Test refresh token 
+POST  http://localhost:3000/auth/refresh
+Content-Type: application/json 
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAyNjY2LCJleHAiOjE3MzYxMDYyNjZ9.UMBN1QHn_m4AL1b4uwzmVIw-fOvRRha6qtviQm8bIVs eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAyNjY2LCJleHAiOjE3MzY3MDc0NjZ9.wUc9NcgH0ucQV-2RD-hSYuhTR3iZmC--RZqqsCb76rs
+### Test Authentification
+GET  http://localhost:3000/posts
+Content-Type: application/json 
+Authorization: eyJhbkciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAzNzgyLCJleHAiOjE3MzYxMDczODJ9.39aUflwUMRTQj3LFVBHkjKpYe1t3IL1NIkDiW8IAKjw eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAzNzgyLCJleHAiOjE3MzY3MDg1ODJ9.4Gx2F6O31H89VUoPZC6zd7nJhdoWqEqDtELYUFRw4QU

@@ -39,7 +39,6 @@ const getComments = async (req: Request, res: Response) => {
         }
       }
       else {
-        console.log(post)
         comments = await Comment.find({ postID });
         res.status(200).json(comments);
       }
