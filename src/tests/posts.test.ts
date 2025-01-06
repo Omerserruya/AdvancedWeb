@@ -2,14 +2,34 @@ import request from "supertest";
 import initApp from "../server";
 import mongoose from "mongoose";
 import postModel from "../models/post_model";
+import userModel, { IUser }  from "../models/user_model";
 import { Express } from "express";
 
 var app: Express;
+type User = IUser & {
+  accessToken?: string,
+  refreshToken?: string
+};
+
+const testUser = {
+  email: "test@user.com",
+  username: "testuser",
+  password: "testpassword",
+} as User;
 
 beforeAll(async () => {
   console.log("beforeAll");
   app = await initApp();
   await postModel.deleteMany();
+  await userModel.deleteMany();
+  await request(app).post("/auth/register").send(testUser);
+  const res = await request(app).post("/auth/login").send(testUser);
+  const accessToken = res.body.accessToken;
+  const refreshToken = res.body.refreshToken;
+  expect(accessToken).toBeDefined();
+  expect(refreshToken).toBeDefined();
+  testUser.accessToken = accessToken;
+  testUser.refreshToken = refreshToken;
 });
 
 afterAll((done) => {
@@ -27,7 +47,8 @@ describe("Posts Tests", () => {
   });
 
   test("Test Create Post", async () => {
-    const response = await request(app).post("/posts").send({
+    const response = await request(app).post("/posts").set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       title: "Test Post",
       content: "Test Content",
       userID: "676fc94c89d0609a0b797952",
@@ -57,7 +78,8 @@ describe("Posts Tests", () => {
   });
 
   test("Test Create Post 2", async () => {
-    const response = await request(app).post("/posts").send({
+    const response = await request(app).post("/posts").set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       title: "Test Post 2",
       content: "Test Content 2",
       userID: "676fc94c89d0609a0b797952",
@@ -72,7 +94,8 @@ describe("Posts Tests", () => {
   });
 
   test("Test update", async () => {
-    const response = await request(app).put("/posts/" + postId).send({  
+    const response = await request(app).put("/posts/" + postId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({  
         title: "Test Post 3",
         content: "Test Content 3"        
     });
@@ -84,14 +107,16 @@ describe("Posts Tests", () => {
   });
 
   test("Test Delete Post", async () => {
-    const response = await request(app).delete("/posts/" + postId);
+    const response = await request(app).delete("/posts/" + postId)
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken});
     expect(response.statusCode).toBe(200);
     const response2 = await request(app).get("/posts/" + postId);
     expect(response2.statusCode).toBe(404);
   });
 
   test("Test Create Post fail", async () => {
-    const response = await request(app).post("/posts").send({
+    const response = await request(app).post("/posts").set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       title: "Test Post 2",
       content: "Test Content 2",
     });

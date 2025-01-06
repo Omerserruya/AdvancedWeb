@@ -1,15 +1,35 @@
 import request from "supertest";
 import initApp from "../server";
 import mongoose from "mongoose";
-import userModel from "../models/user_model";
+import userModel, { IUser }  from "../models/user_model";
 import { Express } from "express";
+
 
 var app: Express;
 
+
+type User = IUser & {
+  accessToken?: string,
+  refreshToken?: string
+};
+const testUser = {
+  email: "test@user.com",
+  username: "testuser",
+  password: "testpassword",
+} as User;
 beforeAll(async () => {
   console.log("beforeAll");
   app = await initApp();
   await userModel.deleteMany(); // Clear the users collection before running tests.
+
+  await request(app).post("/auth/register").send(testUser);
+  const res = await request(app).post("/auth/login").send(testUser);
+  const accessToken = res.body.accessToken;
+  const refreshToken = res.body.refreshToken;
+  expect(accessToken).toBeDefined();
+  expect(refreshToken).toBeDefined();
+  testUser.accessToken = accessToken;
+  testUser.refreshToken = refreshToken;
 });
 
 afterAll((done) => {
@@ -24,7 +44,7 @@ describe("Users Tests", () => {
   test("Users test get all", async () => {
     const response = await request(app).get("/users");
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(0); // Initially, there are no users.
+    expect(response.body.length).toBe(1); // Initially, there are no users.
   });
 
   test("Test get all users fail", async () => {
@@ -40,7 +60,7 @@ describe("Users Tests", () => {
   
 
   test("Test Create User", async () => {
-    const response = await request(app).post("/users").send({
+    const response = await request(app).post("/users").set({authorization: testUser.accessToken + " " + testUser.refreshToken}).send({
       username: "TestUser",
       email: "testuser@example.com",
       password: "TestPassword",
@@ -52,7 +72,7 @@ describe("Users Tests", () => {
   });
 
   test("Test Create User fail - missing username, email, or password", async () => {
-    const response = await request(app).post("/users").send({
+    const response = await request(app).post("/users").set({authorization: testUser.accessToken + " " + testUser.refreshToken}).send({
       username: "TestUserFail",
       email: "testuserfail@example.com",
     });
@@ -60,14 +80,15 @@ describe("Users Tests", () => {
     expect(response.statusCode).toBe(400); // Missing password
     expect(response.body.message).toBe("Username, email, and password are required");
   
-    const response2 = await request(app).post("/users").send({
+    const response2 = await request(app).post("/users").set({authorization: testUser.accessToken + " " + testUser.refreshToken}).send({
       username: "TestUserFail2",
       password: "password123",
     });
     expect(response2.statusCode).toBe(400); // Missing email
     expect(response2.body.message).toBe("Username, email, and password are required");
   
-    const response3 = await request(app).post("/users").send({
+    const response3 = await request(app).post("/users").set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       email: "testuserfail3@example.com",
       password: "password123",
     });
@@ -83,7 +104,8 @@ describe("Users Tests", () => {
     });
   
     const response = await request(app).post("/users")
-      .send({ username: "testuser3543", email: "testuser3545@example.com", password: "password123" });
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({ username: "testuser3543", email: "testuser3545@example.com", password: "password123" });
   
     // Verify that the response is a 500 error, as we mocked a server-side issue
     expect(response.statusCode).toBe(500);
@@ -132,7 +154,8 @@ describe("Users Tests", () => {
 
   
   test("Test Update User", async () => {
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "UpdatedUser",
       email: "updateduser@example.com",
     });
@@ -145,7 +168,8 @@ describe("Users Tests", () => {
   });
 
   test("Test Update User", async () => {
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "UpdatedUser",  // Ensure this is included
       email: "updateduser@example.com",
     });
@@ -160,14 +184,16 @@ describe("Users Tests", () => {
 
   // Test: Fail to update user due to empty body
   test("Test Update User fail", async () => {
-    const response = await request(app).put("/users/" + userId).send({});
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({});
     expect(response.statusCode).toBe(400); 
     expect(response.body.message).toBe("At least one field (e.g., username, email) is required to update");
   });
 
   test("Test Update User with password", async () => {
     const newPassword = "newPassword123";
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "UpdatedUserWithPassword",
       email: "updateduserpassword@example.com",
       password: newPassword,
@@ -181,7 +207,8 @@ describe("Users Tests", () => {
   // Test: Fail when user not found
   test("Test Update User fail - user not found", async () => {
     const nonExistentId = new mongoose.Types.ObjectId();
-    const response = await request(app).put("/users/" + nonExistentId).send({
+    const response = await request(app).put("/users/" + nonExistentId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "NewUsername",
     });
     expect(response.statusCode).toBe(404);
@@ -194,7 +221,8 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "UpdatedUser",
     });
     expect(response.statusCode).toBe(500); // Database error
@@ -205,7 +233,8 @@ describe("Users Tests", () => {
   test("Test Update User fail - update operation failed", async () => {
     jest.spyOn(userModel, 'findByIdAndUpdate').mockResolvedValueOnce(null); // Simulate update failure (no user updated)
 
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "FailedUpdate",
     });
     expect(response.statusCode).toBe(500); // Update failed
@@ -218,7 +247,8 @@ describe("Users Tests", () => {
       throw new Error("Database update failed");
     });
 
-    const response = await request(app).put("/users/" + userId).send({
+    const response = await request(app).put("/users/" + userId).set({authorization: testUser.accessToken + " " + testUser.refreshToken})
+    .send({
       username: "FailedUpdate",
     });
     expect(response.statusCode).toBe(500);
@@ -226,7 +256,8 @@ describe("Users Tests", () => {
   });
 
   test("Test Delete User", async () => {
-    const response = await request(app).delete("/users/" + userId);
+    const response = await request(app).delete("/users/" + userId)
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken});
     expect(response.statusCode).toBe(200);
 
     const response2 = await request(app).get("/users/" + userId);
@@ -234,7 +265,8 @@ describe("Users Tests", () => {
   });
 
   test("Test Delete User fail - invalid ID format", async () => {
-    const response = await request(app).delete("/users/invalidId");
+    const response = await request(app).delete("/users/invalidId")
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken});
     expect(response.statusCode).toBe(404); // Invalid ID format should return 404
     expect(response.body.message).toBe("Invalid user ID format");
   });
@@ -242,7 +274,8 @@ describe("Users Tests", () => {
   test("Test Delete User with valid ID but user not found", async () => {
     // Use a valid but non-existent ID (e.g., a valid ObjectId but not in the database)
     const nonExistentId = new mongoose.Types.ObjectId(); // Generate a valid but non-existent ObjectId
-    const response = await request(app).delete("/users/" + nonExistentId);
+    const response = await request(app).delete("/users/" + nonExistentId)
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken});
     expect(response.statusCode).toBe(404); // Should return 404 for user not found
     expect(response.body.message).toBe("User not found"); // Ensure the correct error message
   });
@@ -255,11 +288,13 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).delete(`/users/${validId}`);
+    const response = await request(app).delete(`/users/${validId}`)
+    .set({authorization: testUser.accessToken + " " + testUser.refreshToken});
 
     expect(response.statusCode).toBe(500); // Internal Server Error
     expect(response.body.message).toBe("Error deleting user");
     expect(response.body.error).toBe("Database error");
   });
 
+  
 });
