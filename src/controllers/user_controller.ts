@@ -28,21 +28,12 @@ const createUserHelper = async (username: string, email: string, password: strin
 
 const addUser = async (req: Request, res: Response) => {
   const { username, email, password, role } = req.body;
-
-  // Check if this is a registration request (bypass admin role check)
-  const isRegister = req.body.isRegister; // Assuming you add this flag in the registration request
-  
-  // If not a register request, check for admin role
-  if (!isRegister) {
-    const userId = req.params.userId;
-    const user = await userModel.findById(userId);
-
-    if (!user || user.role !== "admin") {
-      res.status(403).json({ message: "Access denied. Admin privileges required." });
-      return;
-    }
+  const { userId } = req.params;
+  const user = await userModel.findById(userId);
+  if(user?.role !== "admin" && role === "admin") {
+    res.status(403).json({ message: "Access denied" });
+    return;
   }
-
   // Validate required fields for the new user
   if (!username || !email || !password) {
     res.status(400).json({ message: "Username, email, and password are required" });
@@ -65,14 +56,8 @@ const addUser = async (req: Request, res: Response) => {
 };
 
 
-// Function to fetch all users (admin-only access)
+// Function to fetch all users 
 const getUsers = async (req: Request, res: Response) => {
-  // Check if the user has admin privileges
-  // if (req.user.role !== "admin") {
-  //   res.status(403).json({ message: "Access denied" });
-  //   return;
-  // }
-
   try {
     const users = await userModel.find();
     res.status(200).json(users);
@@ -86,7 +71,6 @@ const getUsers = async (req: Request, res: Response) => {
 // Function to fetch a user by ID
 const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: "Invalid user ID format" });
@@ -104,7 +88,7 @@ const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-// Function to delete a user (admin-only access)
+// Function to delete a user (self or admin access)
 const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
  const userId = req.params.userId;
@@ -112,7 +96,7 @@ const deleteUser = async (req: Request, res: Response) => {
   const user = await userModel.findById(userId);
 
   // Check if the user has admin privileges
-  if (user?.role !== "admin" && user?._id !== id) {
+  if (user?.role !== "admin" && userId !== id) {
     res.status(403).json({ message: "Access denied" });
     return;
   }
@@ -134,23 +118,19 @@ const deleteUser = async (req: Request, res: Response) => {
 
 // Function to update a user (self or admin access)
 const updateUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userId = req.params.userId;
+  const {id ,userId} = req.params;
   const { username, email, password }: {
     username?: string;
     email?: string;
     password?: string;
   } = req.body;
-  
-
-
   try {
     // Find the user by ID
-    const adminCheck = await userModel.findById(userId);
- if (adminCheck?.role !== "admin" && adminCheck?._id !== id) {
+    
+ if (id !== userId) {
     res.status(403).json({ message: "Access denied" });
     return;
-  }const user = await userModel.findById(id);
+  }const user = await userModel.findById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;

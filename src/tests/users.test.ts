@@ -28,10 +28,15 @@ beforeAll(async () => {
   console.log("beforeAll");
   app = await initApp();
   await userModel.deleteMany(); // Clear the users collection before running tests.
-
+    
   // Register and login admin user
-  await request(app).post("/auth/register").send(adminUser);
-  const adminRes = await request(app).post("/auth/login").send(adminUser);
+  const newadminUser = new userModel({
+    username: adminUser.username, // Customize admin name if needed
+    email: adminUser.email,
+    password: adminUser.password,
+    role: 'admin',
+  });
+  const adminRes = await request(app).post("/auth/login").send(newadminUser);
   adminUser.accessToken = adminRes.body.accessToken;
   adminUser.refreshToken = adminRes.body.refreshToken;
 
