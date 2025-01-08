@@ -4,10 +4,10 @@
   "description": "Advanced Web Development",
   "main": "index.js",
   "scripts": {
-    "test": "tsc && cross-env NODE_ENV=test jest --detectOpenHandles --forceExit  --coverage",
+    "test": "tsc && NODE_ENV=test jest --detectOpenHandles --forceExit  --coverage",
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
-    "devstart": "cross-env NODE_ENV=dev nodemon ./src/app.ts"
+    "devstart": "NODE_ENV=dev nodemon ./src/app.ts"
   },
   "keywords": [],
   "author": "",
@@ -27,10 +27,14 @@
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/supertest": "^6.0.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.7",
     "bcrypt": "^5.1.1",
     "cross-env": "^7.0.3",
     "eslint": "^9.17.0",
     "supertest": "^7.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"

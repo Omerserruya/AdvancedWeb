@@ -1,20 +1,310 @@
 import express from "express";
 const postsRoute = express.Router();
 import postsController from "../controllers/post_controller";
-import Comment from "../controllers/comment_controller";   
-import  { authentification } from "../controllers/auth_controller";
+import { authentification } from "../controllers/auth_controller";
+import Comment from "../controllers/comment_controller";
 
-postsRoute.post('/', authentification ,postsController.addPost);
-postsRoute.get('/' ,postsController.getPost);
+/**
+ * @swagger
+ * tags:
+ *   - name: Posts
+ *     description: The Posts API
+ *   - name: Comments
+ *     description: The Comments API
+ */
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     Post:
+ *       type: object
+ *       required:
+ *         - title
+ *         - content
+ *       properties:
+ *         title:
+ *           type: string
+ *           description: The post title
+ *         content:
+ *           type: string
+ *           description: The post content
+ *       example:
+ *         title: 'My Post'
+ *         content: 'This is the content of the post'
+ *     Comment:
+ *       type: object
+ *       required:
+ *         - content
+ *       properties:
+ *         content:
+ *           type: string
+ *           description: The comment content
+ *       example:
+ *         content: 'This is a comment'
+ */
+
+/**
+ * @swagger
+ * /posts:
+ *   post:
+ *     summary: Create a new post
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Post'
+ *     responses:
+ *       201:
+ *         description: Post created successfully
+ *       401:
+ *         description: Unauthorized
+ */
+postsRoute.post('/', authentification, postsController.addPost);
+
+/** 
+ * @swagger
+ * /posts:
+ *   get:
+ *     summary: Get all posts
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: A list of posts
+ */
+postsRoute.get('/', postsController.getPost);
+
+/**
+ * @swagger
+ * /posts/{id}:
+ *   get:
+ *     summary: Get a post by ID
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: The post data
+ *       404:
+ *         description: Post not found
+ */
 postsRoute.get('/:id', postsController.getPostById);
-postsRoute.put('/:id',authentification , postsController.updatePost);
-postsRoute.delete('/:id',authentification , postsController.deletePost);
 
-postsRoute.post('/:postID/comments',authentification , Comment.createComment); 
-postsRoute.get('/:postID/comments', Comment.getComments); 
+/** 
+ * @swagger
+ * /posts/{id}:
+ *   put:
+ *     summary: Update a post by ID
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Post'
+ *     responses:
+ *       200:
+ *         description: Post updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
+ */
+
+postsRoute.put('/:id', authentification, postsController.updatePost);
+
+/** 
+ * @swagger
+ * /posts/{id}:
+ *   delete:
+ *     summary: Delete a post by ID
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
+ */
+postsRoute.delete('/:id', authentification, postsController.deletePost);
+
+
+// Comments
+
+/**
+ * @swagger
+ * /posts/{postID}/comments:
+ *   post:
+ *     summary: Create a new comment on a post
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Comment'
+ *     responses:
+ *       201:
+ *         description: Comment created successfully
+ *       401:
+ *         description: Unauthorized
+ */
+postsRoute.post('/:postID/comments', authentification, Comment.createComment);
+
+ /**
+  * @swagger
+  * /posts/{postID}/comments:
+ *   get:
+ *     summary: Get all comments on a post
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: postID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: A list of comments
+ */
+postsRoute.get('/:postID/comments', Comment.getComments);
+
+/**
+ * @swagger
+ * /posts/{postID}/comments/{commentID}:
+ *   get:
+ *     summary: Get a comment by ID
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: postID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *       - in: path
+ *         name: commentID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The comment ID
+ *     responses:
+ *       200:
+ *         description: The comment data
+ *       404:
+ *         description: Comment not found
+ */
 postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
-postsRoute.put('/:postID/comments/:commentID',authentification , Comment.updateComment);
-postsRoute.delete('/:postID/comments/:commentID',authentification , Comment.deleteComment);
- 
+
+ /** 
+ * @swagger   
+ * /posts/{postID}/comments/{commentID}:
+ *   put:
+ *     summary: Update a comment by ID
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *       - in: path
+ *         name: commentID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Comment'
+ *     responses:
+ *       200:
+ *         description: Comment updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Comment not found
+ */
+postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateComment);
+
+/** 
+ * @swagger
+ * /posts/{postID}/comments/{commentID}:
+ *   delete:
+ *     summary: Delete a comment by ID
+ *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *       - in: path
+ *         name: commentID
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The comment ID
+ *     responses:
+ *       200:
+ *         description: Comment deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Comment not found
+ */
+postsRoute.delete('/:postID/comments/:commentID', authentification, Comment.deleteComment);
+
 export default postsRoute;
-  
