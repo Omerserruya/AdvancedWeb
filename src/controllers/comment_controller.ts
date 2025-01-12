@@ -83,11 +83,8 @@ const deleteComment = async (req: Request, res: Response) => {
       res.status(404).json({ message: 'Comment not found' });
       return;
     } 
-    if(!user){
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
-      if(comment.userID !== userId && user.role !== "admin"){
+  
+      if(comment.userID !== userId && user?.role !== "admin"){
         res.status(403).json({ message: 'Access denied' });
         return;
       }
