@@ -67,7 +67,7 @@ import Comment from "../controllers/comment_controller";
  *       201:
  *         description: Post created successfully
  *       400:
- *        description: Bad request
+ *         description: Bad request
  *       401:
  *         description: Unauthorized
  */
@@ -85,7 +85,7 @@ postsRoute.post('/', authentification, postsController.addPost);
  *       401:
  *         description: Unauthorized
  *       500:
- *        description: Error retrieving posts
+ *         description: Error retrieving posts
  */
 postsRoute.get('/', postsController.getPost);
 
@@ -106,11 +106,11 @@ postsRoute.get('/', postsController.getPost);
  *       200:
  *         description: The post data
  *       401:
- *        description: Unauthorized
- *      404:
- *       description: {ID} post not found
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
  *       500:
- *          description: Error retrieving post
+ *         description: Error retrieving post
  */
 postsRoute.get('/:id', postsController.getPostById);
 
@@ -138,12 +138,12 @@ postsRoute.get('/:id', postsController.getPostById);
  *     responses:
  *       200:
  *         description: Post updated successfully
- *      400:
- *        description: Bad request
+ *       400:
+ *         description: Bad request
  *       401:
  *         description: Unauthorized
  *       403:
- *          description: Access denied
+ *         description: Access denied
  *       404:
  *         description: Post not found
  */
@@ -174,9 +174,6 @@ postsRoute.put('/:id', authentification, postsController.updatePost);
  */
 postsRoute.delete('/:id', authentification, postsController.deletePost);
 
-
-// Comments
-
 /**
  * @swagger
  * /posts/{postID}/comments:
@@ -203,16 +200,16 @@ postsRoute.delete('/:id', authentification, postsController.deletePost);
  *         description: Comment created successfully
  *       401:
  *         description: Unauthorized
- *      404:
- *       description: Post not found
- *      500:
- *       description: Error creating comment
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Error creating comment
  */
 postsRoute.post('/:postID/comments', authentification, Comment.createComment);
 
- /**
-  * @swagger
-  * /posts/{postID}/comments:
+/**
+ * @swagger
+ * /posts/{postID}/comments:
  *   get:
  *     summary: Get all comments on a post
  *     tags: [Comments]
@@ -226,12 +223,12 @@ postsRoute.post('/:postID/comments', authentification, Comment.createComment);
  *     responses:
  *       200:
  *         description: A list of comments
- *      401:
- *       description: Unauthorized
+ *       401:
+ *         description: Unauthorized
  *       404:
- *        description: Post not found
- *      500:
- *        description: Error retrieving comments
+ *         description: Post not found
+ *       500:
+ *         description: Error retrieving comments
  */
 postsRoute.get('/:postID/comments', Comment.getComments);
 
@@ -258,7 +255,7 @@ postsRoute.get('/:postID/comments', Comment.getComments);
  *       200:
  *         description: The comment data
  *       401:
- *        description: Unauthorized
+ *         description: Unauthorized
  *       404:
  *         description: Comment not found
  *       500:
@@ -266,7 +263,7 @@ postsRoute.get('/:postID/comments', Comment.getComments);
  */
 postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
 
- /** 
+/** 
  * @swagger   
  * /posts/{postID}/comments/{commentID}:
  *   put:
@@ -301,7 +298,7 @@ postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
  *       404:
  *         description: Comment not found
  *       500:
- *        description: Error updating comment
+ *         description: Error updating comment
  */
 postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateComment);
 
@@ -331,12 +328,12 @@ postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateC
  *         description: Comment deleted successfully
  *       401:
  *         description: Unauthorized
- *      403:
+ *       403:
  *         description: Access denied
  *       404:
  *         description: Comment not found
- *      500:
- *       description: Error deleting comment
+ *       500:
+ *         description: Error deleting comment
  */
 postsRoute.delete('/:postID/comments/:commentID', authentification, Comment.deleteComment);
 
