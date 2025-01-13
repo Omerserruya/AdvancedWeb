@@ -17,10 +17,10 @@ import Comment from "../controllers/comment_controller";
  * @swagger
  * components:
  *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     ApiKeyAuth:
+ *       type: apiKey
+ *       in: header
+ *       name: authorization
  *   schemas:
  *     Post:
  *       type: object
@@ -56,7 +56,7 @@ import Comment from "../controllers/comment_controller";
  *     summary: Create a new post
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -121,7 +121,7 @@ postsRoute.get('/:id', postsController.getPostById);
  *     summary: Update a post by ID
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -156,7 +156,7 @@ postsRoute.put('/:id', authentification, postsController.updatePost);
  *     summary: Delete a post by ID
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -181,7 +181,7 @@ postsRoute.delete('/:id', authentification, postsController.deletePost);
  *     summary: Create a new comment on a post
  *     tags: [Comments]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: postID
@@ -270,7 +270,7 @@ postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
  *     summary: Update a comment by ID
  *     tags: [Comments]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: postID
@@ -309,7 +309,7 @@ postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateC
  *     summary: Delete a comment by ID
  *     tags: [Comments]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: postID

@@ -14,10 +14,10 @@ import { authentification } from "../controllers/auth_controller";
  * @swagger
  * components:
  *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     ApiKeyAuth:
+ *       type: apiKey
+ *       in: header
+ *       name: authorization
  *   schemas:
  *     User:
  *       type: object
@@ -48,7 +48,7 @@ import { authentification } from "../controllers/auth_controller";
  *     summary: Create a new user
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -103,7 +103,7 @@ usersRoute.get('/:id', userController.getUserById);
  *     summary: Update a user by ID
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -134,7 +134,7 @@ usersRoute.put('/:id', authentification, userController.updateUser);
  *     summary: Delete a user by ID
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id

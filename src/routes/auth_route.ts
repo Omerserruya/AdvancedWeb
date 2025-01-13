@@ -14,10 +14,10 @@ import { authentification } from "../controllers/auth_controller";
  * @swagger
  * components:
  *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     ApiKeyAuth:
+ *       type: apiKey
+ *       in: header
+ *       name: authorization
  */
 
 /**
@@ -95,7 +95,7 @@ authRoute.post('/login', auth.login);
  *     summary: Logout a user
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     responses:
  *       200:
  *         description: User logged out successfully
@@ -113,7 +113,7 @@ authRoute.post('/logout', auth.logout);
  *     summary: Refresh the access token
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     responses:
  *       200:
  *         description: Token refreshed successfully
@@ -131,7 +131,7 @@ authRoute.post('/refresh', auth.refreshToken);
  *     summary: Test the authentication middleware
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     responses:
  *       200:
  *         description: Auth successful

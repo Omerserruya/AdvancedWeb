@@ -20,7 +20,17 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:3000", },],
+    servers: [{ url: "http://localhost:3000" }],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "authorization",
+          description: "Enter your token here (without Bearer prefix)"
+        }
+      },
+    }
   },
   apis: ["./src/routes/*.ts"],
 };
