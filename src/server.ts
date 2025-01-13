@@ -8,6 +8,34 @@ import postsRoute from "./routes/post_route";
 import healthRoute from "./routes/health_route";
 import usersRoute from "./routes/user_route";
 import authRoute from "./routes/auth_route";
+import swaggerJsDoc from "swagger-jsdoc";
+import swaggerUI from "swagger-ui-express";
+
+
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Web Dev 2025 REST API",
+      version: "1.0.0",
+      description: "REST server including authentication using JWT",
+    },
+    servers: [{ url: "http://localhost:3000" }],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "authorization",
+          description: "Enter your token here (without Bearer prefix)"
+        }
+      },
+    }
+  },
+  apis: ["./src/routes/*.ts"],
+};
+const specs = swaggerJsDoc(options);
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -21,6 +49,7 @@ app.use('/health',healthRoute)
 app.use('/auth',authRoute)
 app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
 const initApp = () => {
   return new Promise<Express>((resolve, reject) => {
