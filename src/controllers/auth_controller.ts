@@ -19,8 +19,8 @@ const generateToken = (userId: string, email: string, secret: string, expiresIn:
 }
 // Function for user registration
 const register = async (req: Request, res: Response)=> {
-    const { username, email, password } = req.body;
-
+    const { username, email, password,role } = req.body;
+      req.body.isRegister = true;
     // Validate required fields
     if (!username || !email || !password) {
         res.status(400).json({ message: "Username, email, and password are required" });
@@ -57,8 +57,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             if (match) {
                 const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                if (!user.tokens) user.tokens = [refreshToken];
-                else user.tokens.push(refreshToken);
+                user.tokens = [refreshToken];
+                //if (!user.tokens) user.tokens = [refreshToken];
+                //else user.tokens.push(refreshToken);
                 await user.save();
                 res.status(200).json({ message: 'Auth successful', accessToken: token, refreshToken: refreshToken });
                 return;
@@ -79,7 +80,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.headers.authorization?.split(" ")[1];
 
     if (!refreshToken) {
-        res.status(401).json({ message: 'Auth failed' });  
+        res.status(401).json({ message: 'Auth failed:refresh token not included in headers' });  
         return;
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
@@ -99,7 +100,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
                 user.tokens = [""];
                 await user.save();
-                res.status(401).json({ message: 'invalid request' });
+                res.status(401).json({ message: 'invalid request: refresh token is wrong' });
                 return;
             }
 
@@ -127,7 +128,7 @@ type Payload = {
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(" ")[0];
     if (!token) {
-        res.status(401).json({ message: 'Auth failed' });
+        res.status(401).json({ message: 'Auth failed: No authorization header' });
         return;
     }
     try {
@@ -150,7 +151,7 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 const refreshToken = async (req: Request, res: Response, next: any) => {
     const refreshToken = req.headers.authorization?.split(" ")[1];
     if (!refreshToken) {
-         res.status(401).json({ message: 'Auth failed' });
+         res.status(401).json({ message: 'Auth failed: No refresh token provided' });
          return;
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
@@ -160,12 +161,12 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
         try {
             const user = await userModel.findById( decoded.userId ).select('+tokens');
             if (!user) {
-                return res.status(401).json({ message: 'invalid request' });
+                return res.status(401).json({ message: 'Invalid request: User not found' });
             }
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {           
                 user.tokens = [""];
                 await user.save();
-                return res.status(401).json({ message: 'invalid request' });
+                return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
                 const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);

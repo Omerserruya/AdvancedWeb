@@ -1,123 +1,133 @@
-
-###
+### Health Check
 GET http://localhost:3000/health
 
-### POST Request to Create User (valid request, should return user object)
-POST http://localhost:3000/users
-Content-Type: application/json
-
-{
-  "username": "jhondoe",  
-  "password":"123456",
-  "email":"jhondoe@example.com"
-}
-
-### GET Request to Fetch All Users (valid request, should return all posts)
-GET http://localhost:3000/users
-Content-Type: application/json
-
-### GET Request to get User by ID
-GET http://localhost:3000/users/677026b7ad973b9da0e90ab1
-
-### PUT Request to Update User by ID
-PUT http://localhost:3000/users/677026b7ad973b9da0e90ab1
-Content-Type: application/json
-
-{
-  "username": "janedoe",  
-  "password":"1234567",
-  "email":"janedoe@example.com"
-}
-
-### DELETE Request to Delete User by ID
-DELETE http://localhost:3000/users/677026b7ad973b9da0e90ab1
-
-### POST Request to Create Post (valid request, should return user object)
-POST http://localhost:3000/posts
-Content-Type: application/json
-
-{
-  "title": "Post 1",
-  "content": "This is Post 1",  
-  "userID":"677026cbad973b9da0e90ab9"
-}
-
-### GET Request to Fetch All Posts (valid request, should return all posts)
-GET http://localhost:3000/posts
-Content-Type: application/json
-
-### GET Request to get Post by ID
-GET http://localhost:3000/posts/677026822521efce0b2e0e15
-
-### GET Request to Fetch All Posts by Sender ID (valid userID, should return posts for userID 123456)
-GET http://localhost:3000/posts?userID=677026cbad973b9da0e90ab9
-Content-Type: application/json
-
-### PUT Request to Update Post by ID
-PUT http://localhost:3000/posts/677026d4ad973b9da0e90abb
-Content-Type: application/json
-
-{
-  "content": "This is Edited Post 1"
-}
-
-### DELETE Request to Delete Post by ID
-DELETE http://localhost:3000/posts/677026a9ad973b9da0e90aaf
-
-### Post a comment
-POST http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments
-Content-Type: application/json
-
-{
-  "userID": "67701dd87deb50b9c16c0299",
-  "content":"not goods"
-}
-### Get comments of post
-GET  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments
-
-###Get comment by id
-GET  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
-
-###Update comment of post
-PUT  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
-Content-Type: application/json
-
-{
-  "content":"Good"
-}
-
-###Delete comment of post
-DELETE  http://localhost:3000/posts/677026d4ad973b9da0e90abb/comments/677027caad973b9da0e90ad7
-
-#### Test Register
+### Register a new user
 POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
   "username": "jhondoe",  
-  "password":"123456",
-  "email":"test@email.com"
+  "password": "123456",
+  "email": "test@email.com"
 }
 
-#### Test Login
+### Login to get tokens
 POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
   "email": "test@email.com", 
-  "password":"123456"
+  "password": "123456"
 }
 
-### Test logout
-POST  http://localhost:3000/auth/logout
-Content-Type: application/json
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAxOTMwLCJleHAiOjE3MzYxMDU1MzB9.Rm7r5NgziIxm9Z9zGG7VZpAMR6MJNghwLGaUvy0X4zU eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAxOTMwLCJleHAiOjE3MzY3MDY3MzB9.ZeTzo_k5xOkSs-YZrX-BeiIOrJsIRQrgITj9amNCtPs
+### Use the tokens obtained from the login response
+### Replace <ACCESS_TOKEN> and <REFRESH_TOKEN> with the actual tokens
 
-### Test refresh token 
-POST  http://localhost:3000/auth/refresh
-Content-Type: application/json 
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAyNjY2LCJleHAiOjE3MzYxMDYyNjZ9.UMBN1QHn_m4AL1b4uwzmVIw-fOvRRha6qtviQm8bIVs eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAyNjY2LCJleHAiOjE3MzY3MDc0NjZ9.wUc9NcgH0ucQV-2RD-hSYuhTR3iZmC--RZqqsCb76rs
-### Test Authentification
-GET  http://localhost:3000/posts
-Content-Type: application/json 
-Authorization: eyJhbkciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAzNzgyLCJleHAiOjE3MzYxMDczODJ9.39aUflwUMRTQj3LFVBHkjKpYe1t3IL1NIkDiW8IAKjw eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3OTI5MjJlYmZmODNhM2FjMmQzNTA0IiwiaWF0IjoxNzM2MTAzNzgyLCJleHAiOjE3MzY3MDg1ODJ9.4Gx2F6O31H89VUoPZC6zd7nJhdoWqEqDtELYUFRw4QU
+### Create User (requires authorization)
+POST http://localhost:3000/users
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "username": "sampleuser",  
+  "password": "123456",
+  "email": "jhondoe@example.com"
+}
+
+### Fetch All Users
+GET http://localhost:3000/users
+Content-Type: application/json
+
+### Get User by ID
+GET http://localhost:3000/users/677be20d2a99b3e2b890650f
+
+### Update User by ID (requires authorization)
+PUT http://localhost:3000/users/677be20d2a99b3e2b890650f
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "username": "janedoe",  
+  "password": "1234567",
+  "email": "janedoe@example.com"
+}
+
+### Delete User by ID (requires authorization)
+DELETE http://localhost:3000/users/677be1b22a99b3e2b89064ff
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+
+### Create Post (requires authorization)
+POST http://localhost:3000/posts
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "title": "Post 1",
+  "content": "This is Post 1",  
+  "userID": "677be20d2a99b3e2b890650f"
+}
+
+### Fetch All Posts
+GET http://localhost:3000/posts
+Content-Type: application/json
+
+### Get Post by ID
+GET http://localhost:3000/posts/677be5272a99b3e2b890653c
+
+### Fetch All Posts by User ID
+GET http://localhost:3000/posts?userID=677be20d2a99b3e2b890650f
+Content-Type: application/json
+
+### Update Post by ID (requires authorization)
+PUT http://localhost:3000/posts/677be5272a99b3e2b890653c
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "content": "This is Edited Post 1"
+}
+
+### Delete Post by ID (requires authorization)
+DELETE http://localhost:3000/posts/677be5272a99b3e2b890653c
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+### Post a comment (requires authorization)
+POST http://localhost:3000/posts/677be5ad2a99b3e2b890654e/comments
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "userID": "677be20d2a99b3e2b890650f",
+  "content": "Im Looking Great!"
+}
+
+### Get comments of post
+GET http://localhost:3000/posts/677be5ad2a99b3e2b890654e/comments
+
+### Get comment by ID
+GET http://localhost:3000/posts/677be5ad2a99b3e2b890654e/comments/677be5e22a99b3e2b8906552
+
+### Update comment of post (requires authorization)
+PUT http://localhost:3000/posts/677be5ad2a99b3e2b890654e/comments/677be5e22a99b3e2b8906552
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+{
+  "content": "Good"
+}
+
+### Delete comment of post (requires authorization)
+DELETE http://localhost:3000/posts/677be5ad2a99b3e2b890654e/comments/677be5e22a99b3e2b8906552
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
+### Logout (requires authorization)
+POST http://localhost:3000/auth/logout
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImphbmVkb2VAZXhhbXBsZS5jb20iLCJ1c2VySWQiOiI2NzdiZTIwZDJhOTliM2UyYjg5MDY1MGYiLCJyYW5kb20iOiIwLjMyMDk5MTc4Mzc0NjI3MzQ2IiwiaWF0IjoxNzM2MTczMTI0LCJleHAiOjE3MzYxNzY3MjR9.qxGqtaqfhIubJJbXEr4_nkvPij3U0CvMcoKThnau5qA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImphbmVkb2VAZXhhbXBsZS5jb20iLCJ1c2VySWQiOiI2NzdiZTIwZDJhOTliM2UyYjg5MDY1MGYiLCJyYW5kb20iOiIwLjg3MjExOTI1NjI5ODA4OCIsImlhdCI6MTczNjE3MzEyNCwiZXhwIjoxNzM2MTc2NzI0fQ.lt2RyyGZcAou4J1X6GpvDHREzrjCmNfj9WSw0VTZWNg 
+
+### Refresh token (requires authorization)
+POST http://localhost:3000/auth/refresh
+Content-Type: application/json
+Authorization:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC40NTMxMDA0MTM5MjU1MzciLCJpYXQiOjE3MzYxNzIwNTUsImV4cCI6MTczNjE3NTY1NX0.NcJhcn48sRs0A4Od8G0v6qJO5ikFCvO1UBxcejFuhKA eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwidXNlcklkIjoiNjc3YmUyMGQyYTk5YjNlMmI4OTA2NTBmIiwicmFuZG9tIjoiMC4xMjI3NzM4MDEzMjEyODQ0NiIsImlhdCI6MTczNjE3MjA1NSwiZXhwIjoxNzM2MTc1NjU1fQ.OYdOPMiCaWONGr020BoLncuE2gpzM4H-47icAXgmEzQ
+
