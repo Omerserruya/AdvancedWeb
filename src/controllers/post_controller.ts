@@ -30,11 +30,11 @@ const getPost = async (req: Request, res: Response) => {
 
 const getPostById = async (req: Request, res: Response) => {
   
-  const {postId} = req.params;
+  const postId = req.params.id;
   try {
     const post = await postModel.findById(postId);
     if (post != null) {
-   
+      
       res.send(post);
     } else {
       res.status(404).send("Post not found");
@@ -44,33 +44,36 @@ const getPostById = async (req: Request, res: Response) => {
     res.status(400).send(error);
   }
 };
-
 const deletePost = async (req: Request, res: Response) => {
-  const {postId , userId} = req.params;
+  const  postId  = req.params.id;
+  const userId = req.params.userId;
+  console.log("req.params:", req.params); // Log the req.params
+  console.log("postId:", postId); // Log the postId
+  console.log("userId:", userId); // Log the userId
+
   try {
     const post = await postModel.findById(postId);
     const user = await userModel.findById(userId);
-    if(!user){
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
+
     if (!post) {
       res.status(404).json({ message: 'Post not found' });
       return;
     }
-    if(post.userID != userId && user.role != "admin"){
-      res.status(403).send("Access denied");
+    if (post.userID != userId && user?.role != "admin") {
+      res.status(403).json({ message: "Access denied" });
       return;
     }
-    const rs = await postModel.findByIdAndDelete(postId);
-    res.status(200).send(rs);
+    await postModel.findByIdAndDelete(postId);
+    res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(500).json({ message: "Error deleting post", error: (error as any).message });
   }
 };
 
+
+
 const updatePost = async (req: Request, res: Response) => { 
-  const {id, userId} = req.params;
+  const { id, userId } = req.params;
   const body = req.body;
   
   try {
@@ -79,16 +82,18 @@ const updatePost = async (req: Request, res: Response) => {
       res.status(404).json({ message: 'Post not found' });
       return;
     }
-    if(post.userID != userId){
+    if (post.userID != userId) {
       res.status(403).send("Access denied");
       return;
     }
-      const updatedPost = await postModel.findByIdAndUpdate(id, {userID: post.userID, title: body.title, content: body.content});
-      res.status(200).send(updatedPost);
-    
+    const updatedPost = await postModel.findByIdAndUpdate(
+      id,
+      { userID: post.userID, title: body.title, content: body.content },
+      { new: true } // This option returns the updated document
+    );
+    res.status(200).send(updatedPost);
   } catch (error) {
     res.status(500).send(error);
   }
 };
-
 export default { addPost, getPost, getPostById , updatePost , deletePost };

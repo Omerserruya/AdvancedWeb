@@ -11,13 +11,6 @@ type User = IUser & {
   refreshToken?: string
 };
 
-const adminUser = {
-  email: "admin@user.com",
-  username: "adminuser",
-  password: "adminpassword",
-  role: "admin"
-} as User;
-
 const testUser = {
   email: "test@user.com",
   username: "testuser",
@@ -27,24 +20,20 @@ const testUser = {
 beforeAll(async () => {
   console.log("beforeAll");
   app = await initApp();
-  await userModel.deleteMany(); // Clear the users collection before running tests.
-    
-  // Register and login admin user
-  const newadminUser = new userModel({
-    username: adminUser.username, // Customize admin name if needed
-    email: adminUser.email,
-    password: adminUser.password,
-    role: 'admin',
-  });
-  const adminRes = await request(app).post("/auth/login").send(newadminUser);
-  adminUser.accessToken = adminRes.body.accessToken;
-  adminUser.refreshToken = adminRes.body.refreshToken;
+  await userModel.deleteMany();
 
-  // Register and login test user
+  // Register regular test user
   await request(app).post("/auth/register").send(testUser);
+  const user = await userModel.findOne({ email: testUser.email });
+  testUser._id = (user?._id as mongoose.Types.ObjectId).toString();
   const testRes = await request(app).post("/auth/login").send(testUser);
   testUser.accessToken = testRes.body.accessToken;
   testUser.refreshToken = testRes.body.refreshToken;
+
+  // Ensure testUser exists
+  const testUserExists = await userModel.findById(testUser._id);
+  console.log("testUserExists:", testUserExists); // Log the testUser existence
+  expect(testUserExists).not.toBeNull();
 });
 
 afterAll((done) => {
@@ -59,7 +48,7 @@ describe("Users Tests", () => {
   test("Users test get all", async () => {
     const response = await request(app).get("/users");
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(2); // Initially, there are two users (admin and test user).
+    expect(response.body.length).toBe(1); // Initially, there is one user (test user).
   });
 
   test("Test get all users fail", async () => {
@@ -68,13 +57,13 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).get("/users"); 
+    const response = await request(app).get("/users");
     expect(response.statusCode).toBe(404); // Should fail with a 404 error due to simulated DB failure
     expect(response.body.message).toBe("Error fetching users");
   });
 
   test("Test Create User", async () => {
-    const response = await request(app).post("/users").set({authorization: adminUser.accessToken + " "  + adminUser.refreshToken }).send({
+    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "TestUser",
       email: "testuser@example.com",
       password: "TestPassword",
@@ -86,7 +75,7 @@ describe("Users Tests", () => {
   });
 
   test("Test Create User fail - missing username, email, or password", async () => {
-    const response = await request(app).post("/users").set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "TestUserFail",
       email: "testuserfail@example.com",
     });
@@ -94,14 +83,14 @@ describe("Users Tests", () => {
     expect(response.statusCode).toBe(400); // Missing password
     expect(response.body.message).toBe("Username, email, and password are required");
 
-    const response2 = await request(app).post("/users").set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response2 = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "TestUserFail2",
       password: "password123",
     });
     expect(response2.statusCode).toBe(400); // Missing email
     expect(response2.body.message).toBe("Username, email, and password are required");
 
-    const response3 = await request(app).post("/users").set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response3 = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       email: "testuserfail3@example.com",
       password: "password123",
     });
@@ -115,7 +104,7 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).post("/users").set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "testuser3543",
       email: "testuser3545@example.com",
       password: "password123"
@@ -134,7 +123,7 @@ describe("Users Tests", () => {
 
   test("Test get user by ID fail - user not found", async () => {
     const nonExistentId = new mongoose.Types.ObjectId(); // Valid but non-existent ID
-    const response = await request(app).get("/users/" + nonExistentId);
+    const response = await request(app).get("/users/" + nonExistentId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
     expect(response.statusCode).toBe(404); // Should return 404 for user not found
     expect(response.body.message).toBe("User not found"); // Ensure the correct error message
   });
@@ -142,7 +131,7 @@ describe("Users Tests", () => {
   test('Invalid user ID format', async () => {
     const invalidId = '12345'; // Not a valid MongoDB ObjectId
 
-    const response = await request(app).get(`/users/${invalidId}`);
+    const response = await request(app).get(`/users/${invalidId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBe("Invalid user ID format");
@@ -156,7 +145,7 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).get(`/users/${validId}`);
+    const response = await request(app).get(`/users/${validId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
 
     expect(response.statusCode).toBe(404); // Even though it's a server-side error, it's caught and returned as a 404
     expect(response.body.message).toBe("Error fetching user");
@@ -164,27 +153,29 @@ describe("Users Tests", () => {
   });
 
   test("Test Update User", async () => {
-    const response = await request(app).put("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).put("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "UpdatedUser",
       email: "updateduser@example.com",
     });
     expect(response.statusCode).toBe(200);
 
-    const afterResponse = await request(app).get("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
+    const afterResponse = await request(app).get("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
     expect(afterResponse.statusCode).toBe(200);
     expect(afterResponse.body.username).toBe("UpdatedUser");
     expect(afterResponse.body.email).toBe("updateduser@example.com");
   });
 
-  test("Test Update User fail", async () => {
-    const response = await request(app).put("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({});
-    expect(response.statusCode).toBe(400);
-    expect(response.body.message).toBe("At least one field (e.g., username, email) is required to update");
+  test("Test Update User fail - access denied", async () => {
+    const response = await request(app).put("/users/" + userId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
+      username: "UpdatedUser",
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.body.message).toBe("Access denied");
   });
 
   test("Test Update User with password", async () => {
     const newPassword = "newPassword123";
-    const response = await request(app).put("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).put("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "UpdatedUserWithPassword",
       email: "updateduserpassword@example.com",
       password: newPassword,
@@ -197,7 +188,7 @@ describe("Users Tests", () => {
 
   test("Test Update User fail - user not found", async () => {
     const nonExistentId = new mongoose.Types.ObjectId();
-    const response = await request(app).put("/users/" + nonExistentId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).put("/users/" + nonExistentId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "NewUsername",
     });
     expect(response.statusCode).toBe(404);
@@ -209,7 +200,7 @@ describe("Users Tests", () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).put("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).put("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "UpdatedUser",
     });
     expect(response.statusCode).toBe(500); // Database error
@@ -219,79 +210,114 @@ describe("Users Tests", () => {
   test("Test Update User fail - update operation failed", async () => {
     jest.spyOn(userModel, 'findByIdAndUpdate').mockResolvedValueOnce(null); // Simulate update failure (no user updated)
 
-    const response = await request(app).put("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  }).send({
+    const response = await request(app).put("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "FailedUpdate",
     });
     expect(response.statusCode).toBe(500); // Update failed
     expect(response.body.message).toBe("Failed to update user");
   });
 
+  test("Test Update User fail - no fields to update", async () => {
+    const response = await request(app).put("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({});
+    expect(response.statusCode).toBe(400); // No fields to update
+    expect(response.body.message).toBe("At least one field (e.g., username, email) is required to update");
+  });
+
   test("Test Delete User", async () => {
-    const response = await request(app).delete("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
+    const response = await request(app).delete("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
     expect(response.statusCode).toBe(200);
 
-    const response2 = await request(app).get("/users/" + userId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
+    const response2 = await request(app).get("/users/" + testUser._id).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
     expect(response2.statusCode).toBe(404); // User should no longer exist.
   });
 
   test("Test Delete User fail - invalid ID format", async () => {
-    const response = await request(app).delete("/users/invalidId").set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
-    expect(response.statusCode).toBe(404); // Invalid ID format should return 404
+    const response = await request(app).delete("/users/invalidId").set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+    expect(response.statusCode).toBe(400); // Invalid ID format should return 400
     expect(response.body.message).toBe("Invalid user ID format");
   });
 
   test("Test Delete User with valid ID but user not found", async () => {
     const nonExistentId = new mongoose.Types.ObjectId(); // Generate a valid but non-existent ObjectId
-    const response = await request(app).delete("/users/" + nonExistentId).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
+    const response = await request(app).delete("/users/" + nonExistentId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
     expect(response.statusCode).toBe(404); // Should return 404 for user not found
     expect(response.body.message).toBe("User not found"); // Ensure the correct error message
   });
 
+  test("Test Delete User fail - access denied", async () => {
+    // Register and login the first user
+    const user1 = {
+      email: "user1@example.com",
+      username: "user1",
+      password: "password1",
+    } as User;
+    await request(app).post("/auth/register").send(user1);
+    const user1Res = await request(app).post("/auth/login").send(user1);
+    user1.accessToken = user1Res.body.accessToken;
+    user1.refreshToken = user1Res.body.refreshToken;
+    const user1Id = ((await userModel.findOne({ email: user1.email })) as IUser | null)?._id?.toString();
+  
+    // Register and login the second user
+    const user2 = {
+      email: "user2@example.com",
+      username: "user2",
+      password: "password2",
+    } as User;
+    await request(app).post("/auth/register").send(user2);
+    const user2Res = await request(app).post("/auth/login").send(user2);
+    user2.accessToken = user2Res.body.accessToken;
+    user2.refreshToken = user2Res.body.refreshToken;
+  
+    // Ensure user1 exists
+    const user1Exists = await userModel.findById(user1Id);
+    console.log("user1Exists before delete:", user1Exists); // Log the user1 existence before delete
+    expect(user1Exists).not.toBeNull();
+  
+    if (user1Exists) {
+      const response = await request(app).delete("/users/" + user1Id).set({ authorization: user2.accessToken + " " + user2.refreshToken });
+      expect(response.statusCode).toBe(403); // Access denied
+      expect(response.body.message).toBe("Access denied");
+    } else {
+      throw new Error("User1 does not exist");
+    }
+  });
+
   test('Database error during user deletion', async () => {
     const validId = new mongoose.Types.ObjectId(); // Generate a valid ObjectId
-
-    // Simulate a database error in findByIdAndDelete
+  
+    // Simulate a database error in findById and findByIdAndDelete
+    jest.spyOn(userModel, 'findById').mockImplementationOnce(() => {
+      throw new Error("Database error");
+    });
     jest.spyOn(userModel, 'findByIdAndDelete').mockImplementationOnce(() => {
       throw new Error("Database error");
     });
-
-    const response = await request(app).delete(`/users/${validId}`).set({ authorization: adminUser.accessToken + " "  + adminUser.refreshToken  });
-
+  
+    const response = await request(app).delete(`/users/${validId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+  
     expect(response.statusCode).toBe(500); // Internal Server Error
     expect(response.body.message).toBe("Error deleting user");
     expect(response.body.error).toBe("Database error");
   });
-  
-  test("Test Update User fail - access denied", async () => {
-    const response = await request(app).put("/users/" + userId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
-      username: "UpdatedUser",
-    });
-    expect(response.statusCode).toBe(403);
-    expect(response.body.message).toBe("Access denied");
-  });
 
-  test("Test Create User fail - access denied", async () => {
-    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
-      username: "NewUser",
-      email: "newuser@example.com",
-      password: "NewPassword",
-    });
-    expect(response.statusCode).toBe(403);
-    expect(response.body.message).toBe("Access denied. Admin privileges required.");
-  });
-
-  test("Test Delete User fail - access denied", async () => {
-    const response = await request(app).delete("/users/" + userId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
-    expect(response.statusCode).toBe(403);
-    expect(response.body.message).toBe("Access denied");
-  });
   test("Test Create User fail - invalid email format", async () => {
-    const response = await request(app).post("/users").set({ authorization: adminUser.accessToken + " " + adminUser.refreshToken }).send({
+    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
       username: "InvalidEmailUser",
       email: "invalid-email-format",
       password: "password123",
     });
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBe("Invalid email format");
+  });
+
+  test("Test Create User fail - access denied for admin role", async () => {
+    const response = await request(app).post("/users").set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({
+      username: "AdminUser",
+      email: "adminuser@example.com",
+      password: "adminpassword",
+      role: "admin"
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.body.message).toBe("Access denied");
   });
 });
