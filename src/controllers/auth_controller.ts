@@ -180,8 +180,6 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
     })
 }
 
-
-
 const test = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'Test successful' });
 };

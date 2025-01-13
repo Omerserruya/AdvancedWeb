@@ -62,6 +62,8 @@ import { authentification } from "../controllers/auth_controller";
  *         description: User registered successfully
  *       400:
  *         description: Bad request
+ *      500:
+ *        description: Error during registration
  */
 authRoute.post('/register', auth.register);
 
@@ -98,8 +100,9 @@ authRoute.post('/login', auth.login);
  *         description: User logged out successfully
  *       401:
  *         description: Unauthorized
+ *      500:
+ *       description: Error during logout
  */
-
 authRoute.post('/logout', auth.logout);
 
 /**
@@ -115,8 +118,9 @@ authRoute.post('/logout', auth.logout);
  *         description: Token refreshed successfully
  *       401:
  *         description: Unauthorized
+ *      500:
+ *         description: Error during token refresh
  */
-
 authRoute.post('/refresh', auth.refreshToken);
 
 /**

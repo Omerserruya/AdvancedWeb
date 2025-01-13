@@ -66,6 +66,8 @@ import Comment from "../controllers/comment_controller";
  *     responses:
  *       201:
  *         description: Post created successfully
+ *       400:
+ *        description: Bad request
  *       401:
  *         description: Unauthorized
  */
@@ -80,6 +82,10 @@ postsRoute.post('/', authentification, postsController.addPost);
  *     responses:
  *       200:
  *         description: A list of posts
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *        description: Error retrieving posts
  */
 postsRoute.get('/', postsController.getPost);
 
@@ -99,8 +105,12 @@ postsRoute.get('/', postsController.getPost);
  *     responses:
  *       200:
  *         description: The post data
- *       404:
- *         description: Post not found
+ *       401:
+ *        description: Unauthorized
+ *      404:
+ *       description: {ID} post not found
+ *       500:
+ *          description: Error retrieving post
  */
 postsRoute.get('/:id', postsController.getPostById);
 
@@ -128,12 +138,15 @@ postsRoute.get('/:id', postsController.getPostById);
  *     responses:
  *       200:
  *         description: Post updated successfully
+ *      400:
+ *        description: Bad request
  *       401:
  *         description: Unauthorized
+ *       403:
+ *          description: Access denied
  *       404:
  *         description: Post not found
  */
-
 postsRoute.put('/:id', authentification, postsController.updatePost);
 
 /** 
@@ -154,8 +167,8 @@ postsRoute.put('/:id', authentification, postsController.updatePost);
  *     responses:
  *       200:
  *         description: Post deleted successfully
- *       401:
- *         description: Unauthorized
+ *       403:
+ *         description: Access denied
  *       404:
  *         description: Post not found
  */
@@ -190,6 +203,10 @@ postsRoute.delete('/:id', authentification, postsController.deletePost);
  *         description: Comment created successfully
  *       401:
  *         description: Unauthorized
+ *      404:
+ *       description: Post not found
+ *      500:
+ *       description: Error creating comment
  */
 postsRoute.post('/:postID/comments', authentification, Comment.createComment);
 
@@ -209,6 +226,12 @@ postsRoute.post('/:postID/comments', authentification, Comment.createComment);
  *     responses:
  *       200:
  *         description: A list of comments
+ *      401:
+ *       description: Unauthorized
+ *       404:
+ *        description: Post not found
+ *      500:
+ *        description: Error retrieving comments
  */
 postsRoute.get('/:postID/comments', Comment.getComments);
 
@@ -234,8 +257,12 @@ postsRoute.get('/:postID/comments', Comment.getComments);
  *     responses:
  *       200:
  *         description: The comment data
+ *       401:
+ *        description: Unauthorized
  *       404:
  *         description: Comment not found
+ *       500:
+ *         description: Error retrieving comment
  */
 postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
 
@@ -273,6 +300,8 @@ postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
  *         description: Unauthorized
  *       404:
  *         description: Comment not found
+ *       500:
+ *        description: Error updating comment
  */
 postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateComment);
 
@@ -302,8 +331,12 @@ postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateC
  *         description: Comment deleted successfully
  *       401:
  *         description: Unauthorized
+ *      403:
+ *         description: Access denied
  *       404:
  *         description: Comment not found
+ *      500:
+ *       description: Error deleting comment
  */
 postsRoute.delete('/:postID/comments/:commentID', authentification, Comment.deleteComment);
 
