@@ -20,7 +20,6 @@ const testUser = {
 let postId = ""; // Variable to store the ID of a created post
 
 beforeAll(async () => {
-  console.log("beforeAll");
   app = await initApp();
   await postModel.deleteMany();
   await userModel.deleteMany();
@@ -35,7 +34,6 @@ beforeAll(async () => {
 });
 
 afterAll((done) => {
-  console.log("afterAll");
   mongoose.connection.close();
   done();
 });

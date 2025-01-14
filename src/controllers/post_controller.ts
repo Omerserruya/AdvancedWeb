@@ -47,9 +47,7 @@ const getPostById = async (req: Request, res: Response) => {
 const deletePost = async (req: Request, res: Response) => {
   const  postId  = req.params.id;
   const userId = req.params.userId;
-  console.log("req.params:", req.params); // Log the req.params
-  console.log("postId:", postId); // Log the postId
-  console.log("userId:", userId); // Log the userId
+
 
   try {
     const post = await postModel.findById(postId);

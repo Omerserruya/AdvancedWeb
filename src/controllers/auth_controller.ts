@@ -32,7 +32,6 @@ const register = async (req: Request, res: Response)=> {
         res.status(201).send(user);
         return;
     } catch (error: any) {
-        console.error(error);
         if (error.message === "User already exists") {
             res.status(400).json({ message: error.message });
             return;

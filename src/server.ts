@@ -41,8 +41,8 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = mongoose.connection
-db.on('error',error=>{console.log(error)})
-db.on('connected',()=>{console.log(`[ ${new Date().toISOString()} ] Connected Succefuly to MongoDB`)})
+// db.on('error',error=>{console.log(error)})
+// db.on('connected',()=>{console.log(`[ ${new Date().toISOString()} ] Connected Succefuly to MongoDB`)})
 
 // Routes Use
 app.use('/health',healthRoute)

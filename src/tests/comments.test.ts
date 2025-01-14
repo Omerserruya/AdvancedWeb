@@ -22,7 +22,6 @@ let postId = "";
 let commentId = "";
 
 beforeAll(async () => {
-  console.log("beforeAll");
   app = await initApp();
   await postModel.deleteMany();
   await commentModel.deleteMany();

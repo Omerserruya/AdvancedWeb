@@ -18,7 +18,6 @@ const testUser = {
 } as User;
 
 beforeAll(async () => {
-  console.log("beforeAll");
   app = await initApp();
   await userModel.deleteMany();
 
@@ -32,12 +31,10 @@ beforeAll(async () => {
 
   // Ensure testUser exists
   const testUserExists = await userModel.findById(testUser._id);
-  console.log("testUserExists:", testUserExists); // Log the testUser existence
   expect(testUserExists).not.toBeNull();
 });
 
 afterAll((done) => {
-  console.log("afterAll");
   mongoose.connection.close();
   done();
 });
@@ -270,7 +267,6 @@ describe("Users Tests", () => {
   
     // Ensure user1 exists
     const user1Exists = await userModel.findById(user1Id);
-    console.log("user1Exists before delete:", user1Exists); // Log the user1 existence before delete
     expect(user1Exists).not.toBeNull();
   
     if (user1Exists) {

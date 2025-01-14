@@ -10,14 +10,12 @@ import createUserHelper from "../controllers/user_controller";
 var app: Express;
 
 beforeAll(async () => {
-  console.log("beforeAll");
   app = await initApp();
   await userModel.deleteMany();
   await postModel.deleteMany();
 });
 
 afterAll((done) => {
-  console.log("afterAll");
   mongoose.connection.close();
   done();
 });
@@ -321,7 +319,6 @@ test("Test timeout token", async () => {
   
   test("Auth test logout - user not found", async () => {
     const uniqueTestUser = createUniqueUser("6");
-    console.log("Unique Test User:", uniqueTestUser);
 
     // Register the test user
     await request(app).post(baseUrl + "/register").send(uniqueTestUser);
@@ -332,10 +329,6 @@ test("Test timeout token", async () => {
     uniqueTestUser.accessToken = loginResponse.body.accessToken;
     uniqueTestUser.refreshToken = loginResponse.body.refreshToken;
 
-    console.log("Login Response Tokens:", {
-        accessToken: uniqueTestUser.accessToken,
-        refreshToken: uniqueTestUser.refreshToken,
-    });
 
     // Mock jwt.verify to return a decoded token with a valid userId
     jest.spyOn(jwt, 'verify').mockImplementation((token, secret, callback) => {
@@ -348,8 +341,6 @@ test("Test timeout token", async () => {
         .set({ authorization: uniqueTestUser.accessToken + " " + uniqueTestUser.refreshToken });
 
 
-    // Log the response body for debugging
-    console.log("Logout Response:", response.body);
 
     // Assert the response status and message
     expect(response.status).toBe(401);
@@ -391,8 +382,6 @@ test("Auth test logout - invalid refresh token in user tokens", async () => {
     .post(baseUrl + "/logout")
     .set({ authorization: uniqueTestUser.accessToken + " " + uniqueTestUser.refreshToken });
 
-  // Log the response for debugging
-  console.log("Logout Response:", response.body);
 
   // Assertions
   expect(response.status).toBe(401);
@@ -401,7 +390,6 @@ test("Auth test logout - invalid refresh token in user tokens", async () => {
 
 test("Refresh token - user not found", async () => {
   const uniqueTestUser = createUniqueUser("8");
-    console.log("Unique Test User:", uniqueTestUser);
 
     // Register the test user
     await request(app).post(baseUrl + "/register").send(uniqueTestUser);
@@ -412,10 +400,6 @@ test("Refresh token - user not found", async () => {
     uniqueTestUser.accessToken = loginResponse.body.accessToken;
     uniqueTestUser.refreshToken = loginResponse.body.refreshToken;
 
-    console.log("Login Response Tokens:", {
-        accessToken: uniqueTestUser.accessToken,
-        refreshToken: uniqueTestUser.refreshToken,
-    });
   jest.spyOn(jwt, 'verify').mockImplementation((token, secret, callback) => {
       (callback as jwt.VerifyCallback)(null, { userId: new mongoose.Types.ObjectId() });
   });
