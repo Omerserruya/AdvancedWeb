@@ -70,7 +70,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             }
         }
     } catch (er) {
-        res.status(500).json({ error: er });
+        res.status(500);
         return;
     }
 }
@@ -82,8 +82,8 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
       user.tokens = [refreshToken];
       await user.save();
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.status(200).json({ message: 'Auth successful' });
     } catch (error) {
       next(error);
@@ -144,8 +144,7 @@ type Payload = {
 
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
-    
-    const token = req.cookies.token as string || req.headers.authorization?.split(" ")[1]; 
+    const token = req.cookies.token as string ; 
     if (!token) {
         res.status(401).json({ message: 'Auth failed: No authorization header' });
         return;
