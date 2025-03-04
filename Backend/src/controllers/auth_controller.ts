@@ -80,6 +80,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         }
     } catch (er) {
         res.status(500);
+        res.status(500);
         return;
     }
 };
