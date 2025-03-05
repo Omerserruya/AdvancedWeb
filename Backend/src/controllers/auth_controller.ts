@@ -147,13 +147,13 @@ type Payload = {
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.accessToken as string ; 
     if (!token) {
-        res.status(401).json({ message: 'Auth failed: No authorization header' });
+        res.status(401).json({ message: 'Auth failed: No credantials were given' });
         return;
     }
     try {
         jwt.verify(token, process.env.JWT_KEY as string, (err, payload) => {
             if (err) {
-                res.status(401).send('Access Denied');
+                res.status(401).json({ message: 'Auth failed' });
                 return;
                 
             }
@@ -169,26 +169,22 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
     const refreshToken = req.cookies.refreshToken as string;
-    console.log(refreshToken);
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
          return;
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
         if (err) {
-            console.log(err);
             return res.status(401).json({ message: 'Auth failed' });
         }
         try {
             const user = await userModel.findById( decoded.userId ).select('+tokens');
             if (!user) {
-                console.log("2");
                 return res.status(401).json({ message: 'Invalid request: User not found' });
             }
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {           
                 user.tokens = [""];
                 await user.save();
-                console.log("3");
                 return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
                 const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
