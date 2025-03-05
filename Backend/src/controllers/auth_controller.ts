@@ -176,19 +176,16 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
         if (err) {
-            console.log(err);
             return res.status(401).json({ message: 'Auth failed' });
         }
         try {
             const user = await userModel.findById( decoded.userId ).select('+tokens');
             if (!user) {
-                console.log("2");
                 return res.status(401).json({ message: 'Invalid request: User not found' });
             }
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {           
                 user.tokens = [""];
                 await user.save();
-                console.log("3");
                 return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
                 const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);

@@ -74,13 +74,21 @@ describe("Auth Tests", () => {
     
     expect(response.headers['set-cookie']).toBeDefined();
     const cookies = response.headers['set-cookie'] as unknown as string[];
-    const accessTokenCookie = cookies.find((c: string) => c.includes('accessToken'));
-    const refreshTokenCookie = cookies.find((c: string) => c.includes('refreshToken'));
-    expect(accessTokenCookie).toBeDefined();
-    expect(refreshTokenCookie).toBeDefined();
+
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
     
-    testUser.accessToken = accessTokenCookie;
-    testUser.refreshToken = refreshTokenCookie;
+    testUser.accessToken = accessTokenValue;
+    testUser.refreshToken = refreshTokenValue;
+
     const user = await userModel.findOne({ email: testUser.email });
     testUser._id = user?._id;
   });
@@ -89,15 +97,23 @@ describe("Auth Tests", () => {
     const response = await request(app).post(baseUrl + "/login").send({"email":testUser.email, "password":testUser.password});
     expect(response.statusCode).toBe(200);
     const cookies = response.headers['set-cookie'] as unknown as string[];
-    const accessTokenCookie = cookies.find((c: string) => c.includes('accessToken'));
-    const refreshTokenCookie = cookies.find((c: string) => c.includes('refreshToken'));
-    expect(accessTokenCookie).toBeDefined();
-    expect(refreshTokenCookie).toBeDefined();
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
     
-    expect(accessTokenCookie).not.toBe(testUser.accessToken);
-    expect(refreshTokenCookie).not.toBe(testUser.refreshToken);
-    testUser.accessToken = accessTokenCookie;
-    testUser.refreshToken = refreshTokenCookie;
+    expect(accessTokenValue).not.toBe(testUser.accessToken);
+    expect(refreshTokenValue).not.toBe(testUser.refreshToken);
+
+    testUser.accessToken = accessTokenValue;
+    testUser.refreshToken = refreshTokenValue;
+
   });
 
   test("Auth test login fail", async () => {
@@ -117,39 +133,46 @@ describe("Auth Tests", () => {
   test("Test refresh token", async () => {
     const response = await request(app)
       .post(baseUrl + "/refresh")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response.statusCode).toBe(200);
-    const cookies = response.headers['set-cookie'] as unknown as string[];
-    const accessTokenCookie = cookies.find((c: string) => c.includes('accessToken'));
-    const refreshTokenCookie = cookies.find((c: string) => c.includes('refreshToken'));
-    expect(accessTokenCookie).toBeDefined();
-    expect(refreshTokenCookie).toBeDefined();
+    const cookies = response.headers['set-cookie'] as unknown as string[]; // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
     
-    testUser.accessToken = accessTokenCookie;
-    testUser.refreshToken = refreshTokenCookie;
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+
+    testUser.accessToken = accessTokenValue;
+    testUser.refreshToken = refreshTokenValue;
   });
 
   test("Double use refresh token", async () => {
     const response = await request(app)
       .post(baseUrl + "/refresh")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response.statusCode).toBe(200);
     const cookies = response.headers['set-cookie'] as unknown as string[];
-    const refreshTokenNew = cookies.find((c: string) => c.includes('refreshToken'));
-    expect(refreshTokenNew).toBeDefined();
-    testUser.refreshToken = refreshTokenNew;
+
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    expect(refreshToken).toBeDefined();
+    testUser.refreshToken = refreshToken;
 
     const response2 = await request(app)
       .post(baseUrl + "/refresh")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response2.statusCode).not.toBe(200);
 
     const response3 = await request(app)
       .post(baseUrl + "/refresh")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response3.statusCode).not.toBe(200);
   });
@@ -158,18 +181,28 @@ describe("Auth Tests", () => {
     const response = await request(app).post(baseUrl + "/login").send(testUser);
     expect(response.statusCode).toBe(200);
     const cookies = response.headers['set-cookie'] as unknown as string[];
-    testUser.accessToken = cookies.find((c: string) => c.includes('accessToken'));
-    testUser.refreshToken = cookies.find((c: string) => c.includes('refreshToken'));
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+    
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+
+    testUser.accessToken = accessTokenValue;
+    testUser.refreshToken = refreshTokenValue;
 
     const response2 = await request(app)
       .post(baseUrl + "/logout")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response2.statusCode).toBe(200);
 
     const response3 = await request(app)
       .post(baseUrl + "/refresh")
-      .set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     
     expect(response3.statusCode).not.toBe(200);
   });
@@ -183,34 +216,46 @@ test("Test timeout token", async () => {
     
     expect(response.headers['set-cookie']).toBeDefined();
     const cookies = response.headers['set-cookie'] as unknown as string[];
-    const accessTokenCookie = cookies.find((c: string) => c.includes('accessToken'));
-    const refreshTokenCookie = cookies.find((c: string) => c.includes('refreshToken'));
-    expect(accessTokenCookie).toBeDefined();
-    expect(refreshTokenCookie).toBeDefined();
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
     
-    testUser.accessToken = accessTokenCookie;
-    testUser.refreshToken = refreshTokenCookie;
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+
+    testUser.accessToken = accessTokenValue;
+    testUser.refreshToken = refreshTokenValue;
+
     // Simulate token expiration
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Attempt to access a protected route with the expired token
-    const response2 = await request(app).post(baseUrl + "/test").set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+    const response2 = await request(app).post(baseUrl + "/test").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response2.statusCode).not.toBe(200);
 
     // Refresh the tokens
-    const response3 = await request(app).post(baseUrl + "/refresh").set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+    const response3 = await request(app).post(baseUrl + "/refresh").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response3.statusCode).toBe(200);
-    expect(response.headers['set-cookie']).toBeDefined();
-    const cookies1 = response.headers['set-cookie'] as unknown as string[];
+    expect(response3.headers['set-cookie']).toBeDefined();
+    const cookies1 = response3.headers['set-cookie'] as unknown as string[];
 
-    const accessTokenCookie1 = cookies1.find((c: string) => c.includes('accessToken'));
-    const refreshTokenCookie1 = cookies1.find((c: string) => c.includes('refreshToken'));
-    expect(accessTokenCookie1).toBeDefined();
-    expect(refreshTokenCookie1).toBeDefined();
-    testUser.accessToken = accessTokenCookie1;
-    testUser.refreshToken = refreshTokenCookie1;
+    const accessToken1 = cookies1.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken1 = cookies1.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue1 = accessToken1.split(';')[0].split('=')[1];
+    const refreshTokenValue1 = refreshToken1.split(';')[0].split('=')[1];
+    
+    expect(accessTokenValue1).toBeDefined();
+    expect(refreshTokenValue1).toBeDefined();
+
+    testUser.accessToken = accessTokenValue1;
+    testUser.refreshToken = refreshTokenValue1;
     // Attempt to access the protected route with the new tokens
-    const response4 = await request(app).post(baseUrl + "/test").set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+    const response4 = await request(app).post(baseUrl + "/test").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response4.statusCode).toBe(200);
   });
 
@@ -278,7 +323,7 @@ test("Test timeout token", async () => {
       throw new Error("Database error");
     });
 
-    const response = await request(app).post(baseUrl + "/refresh").set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+    const response = await request(app).post(baseUrl + "/refresh").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response.status).toBe(500);
     expect(response.body.error).toBeDefined();
   });
@@ -331,7 +376,7 @@ test("Test timeout token", async () => {
       throw new Error("Database error");
     });
   
-    const response = await request(app).post(baseUrl + "/logout").set('Cookie',`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`);
+    const response = await request(app).post(baseUrl + "/logout").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response.status).toBe(500);
     expect(response.body.error).toBeDefined();
   });
@@ -402,10 +447,22 @@ test("Test timeout token", async () => {
 
     // Login the test user and store tokens
     const loginResponse = await request(app).post(baseUrl + "/login").send(uniqueTestUser);
-    expect(loginResponse.statusCode).toBe(200);
-    uniqueTestUser.accessToken = loginResponse.body.accessToken;
-    uniqueTestUser.refreshToken = loginResponse.body.refreshToken;
+    expect(loginResponse.headers['set-cookie']).toBeDefined();
+    const cookies = loginResponse.headers['set-cookie'] as unknown as string[];
 
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+    
+    uniqueTestUser.accessToken = accessTokenValue;
+    uniqueTestUser.refreshToken = refreshTokenValue;
 
 
     // Mock jwt.verify to return a decoded token with a valid userId
