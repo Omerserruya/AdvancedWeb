@@ -55,23 +55,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             if (match) {
                 const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                
+                //user.tokens = [refreshToken];
                 if (!user.tokens) user.tokens = [refreshToken];
                 else user.tokens.push(refreshToken);
                 await user.save();
-
-                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
-                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
-                
-                // Return user data with the response
-                res.status(200).json({
-                    message: 'Auth successful',
-                    user: {
-                        _id: user._id,
-                        username: user.username,
-                        email: user.email,
-                    }
-                });
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+                res.status(200).json({ message: 'Auth successful' }).redirect('/');
             }
             else {
                 res.status(401).json({ message: 'Auth failed' });
@@ -90,15 +80,13 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
     try {
       const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-      
-      user.tokens = [refreshToken];
+      //user.tokens = [refreshToken];
+      if (!user.tokens) user.tokens = [refreshToken];
+      else user.tokens.push(refreshToken);
       await user.save();
-      
-      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
-      
-      // Redirect to home page using relative path
-      res.redirect('/home');
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.status(200).json({ message: 'Auth successful' });
     } catch (error) {
       next(error);
     }
@@ -188,16 +176,19 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
         if (err) {
+            console.log(err);
             return res.status(401).json({ message: 'Auth failed' });
         }
         try {
             const user = await userModel.findById( decoded.userId ).select('+tokens');
             if (!user) {
+                console.log("2");
                 return res.status(401).json({ message: 'Invalid request: User not found' });
             }
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {           
                 user.tokens = [""];
                 await user.save();
+                console.log("3");
                 return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
                 const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
