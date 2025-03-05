@@ -6,6 +6,9 @@
   "scripts": {
     "test": "tsc && NODE_ENV=test jest --detectOpenHandles --forceExit  --coverage",
     "test:auth": "tsc && NODE_ENV=test jest -i src/tests/auth.test.ts --detectOpenHandles --forceExit  --coverage",
+    "test:posts": "tsc && NODE_ENV=test jest -i src/tests/posts.test.ts --detectOpenHandles --forceExit  --coverage",
+    "test:comments": "tsc && NODE_ENV=test jest -i src/tests/comments.test.ts --detectOpenHandles --forceExit  --coverage",
+    "test:users": "tsc && NODE_ENV=test jest -i src/tests/users.test.ts --detectOpenHandles --forceExit  --coverage",
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
     "devstart": "NODE_ENV=dev nodemon ./src/app.ts"
