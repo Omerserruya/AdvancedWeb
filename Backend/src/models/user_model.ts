@@ -5,6 +5,8 @@ import { Schema, Document, model} from 'mongoose';
 
 export interface IUser extends Document {
   password?: string;
+  githubId?: string;
+  googleId?: string;
   username: string;
   email: string;
   role?: string;
@@ -25,8 +27,16 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     select: false
+  },
+  githubId: {
+    type: String,
+    required: false
+  },
+  googleId: {
+    type: String,
+    required: false
   },
   role: {
     type: String,
@@ -49,6 +59,17 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Custom validation to ensure at least one of password, githubId, or googleId is present
+userSchema.pre('save', function (next) {
+  // Check if it's a new document (i.e., being created)
+  if (this.isNew) {
+    // Custom validation to ensure at least one of password, githubId, or googleId is present
+    if (!this.password && !this.githubId && !this.googleId) {
+      this.invalidate('password', 'At least one of password, githubId, or googleId is required.');
+    }
+  }
+  next();
+});
 userSchema.methods.comparePassword = async function (
   this: IUser,
   candidatePassword: string

@@ -2,6 +2,7 @@ import express from "express";
 const authRoute = express.Router();
 import auth from "../controllers/auth_controller";
 import { authentification } from "../controllers/auth_controller";
+import passport from "../../passport-config"; 
 
 /**
  * @swagger
@@ -139,5 +140,14 @@ authRoute.post('/refresh', auth.refreshToken);
  *         description: Unauthorized
  */
 authRoute.post('/test', authentification, auth.test);
+authRoute.get('/test', authentification, auth.test);
+
+// GitHub authentication routes
+authRoute.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
+authRoute.get('/github/callback', passport.authenticate('github', { failureRedirect: '/', session: false }), auth.loginExternal);
+
+// Google authentication routes
+authRoute.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+authRoute.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), auth.loginExternal);
 
 export default authRoute;

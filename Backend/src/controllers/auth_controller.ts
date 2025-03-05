@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import userModel from '../models/user_model';
+import userModel, { IUser } from '../models/user_model';
 import jwt from 'jsonwebtoken';
 import createUserHelper from "./user_controller";
-import mongoose from 'mongoose';
 
 const generateToken = (userId: string, email: string, secret: string, expiresIn: string) => {
     return jwt.sign(
@@ -56,12 +55,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             if (match) {
                 const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                user.tokens = [refreshToken];
-                //if (!user.tokens) user.tokens = [refreshToken];
-                //else user.tokens.push(refreshToken);
+                //user.tokens = [refreshToken];
+                if (!user.tokens) user.tokens = [refreshToken];
+                else user.tokens.push(refreshToken);
                 await user.save();
-                res.status(200).json({ message: 'Auth successful', accessToken: token, refreshToken: refreshToken });
-                return;
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+                res.status(200).json({ message: 'Auth successful' }).redirect('/');
             }
             else {
                 res.status(401).json({ message: 'Auth failed' });
@@ -69,14 +69,32 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             }
         }
     } catch (er) {
-        res.status(500).json({ error: er });
+        res.status(500);
         return;
     }
-}
+};
+// Login External users - after login with google or github for tokens
+const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as IUser;
+    try {
+      const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
+      const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
+      //user.tokens = [refreshToken];
+      if (!user.tokens) user.tokens = [refreshToken];
+      else user.tokens.push(refreshToken);
+      await user.save();
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.status(200).json({ message: 'Auth successful' });
+    } catch (error) {
+      next(error);
+    }
+  };
+  
 
 // Logout a user - remove refreshToken from user
 const logout = async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.headers.authorization?.split(" ")[1];
+    const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
         res.status(401).json({ message: 'Auth failed:refresh token not included in headers' });  
@@ -93,7 +111,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             if (!user) {
                 res.status(401).json({ message: 'invalid request' });
                 return;
-            }
+            }  
 
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {
 
@@ -106,6 +124,8 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             else {
                 user.tokens.splice(user.tokens.indexOf(refreshToken as string), 1);
                 await user.save();
+                res.clearCookie('accessToken');
+                res.clearCookie('refreshToken');
                 res.status(200).json({ message: 'Logout successful' });
                 return;
             }
@@ -125,15 +145,15 @@ type Payload = {
 
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(" ")[0];
+    const token = req.cookies.accessToken as string ; 
     if (!token) {
-        res.status(401).json({ message: 'Auth failed: No authorization header' });
+        res.status(401).json({ message: 'Auth failed: No credantials were given' });
         return;
     }
     try {
         jwt.verify(token, process.env.JWT_KEY as string, (err, payload) => {
             if (err) {
-                res.status(401).send('Access Denied');
+                res.status(401).json({ message: 'Auth failed' });
                 return;
                 
             }
@@ -148,7 +168,7 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
-    const refreshToken = req.headers.authorization?.split(" ")[1];
+    const refreshToken = req.cookies.refreshToken as string;
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
          return;
@@ -171,7 +191,9 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
                 const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
                 user.tokens[user.tokens.indexOf(refreshToken as string)] = newRefreshToken;
                 await user.save();
-                return res.status(200).json({ message: 'Auth successful', accessToken: newToken, refreshToken: newRefreshToken });
+                res.cookie('accessToken', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+                return res.status(200).json({ message: 'Auth successful'});
             }
         } catch (error) {
             res.status(500).json({ error: error });
@@ -182,4 +204,4 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
 const test = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'Test successful' });
 };
-export default { login, register, logout, refreshToken , test};
+export default { login, register, logout, refreshToken , test, loginExternal};
