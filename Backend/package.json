@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tsc && NODE_ENV=test jest --detectOpenHandles --forceExit  --coverage",
+    "test:auth": "tsc && NODE_ENV=test jest -i src/tests/auth.test.ts --detectOpenHandles --forceExit  --coverage",
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
     "devstart": "NODE_ENV=dev nodemon ./src/app.ts"

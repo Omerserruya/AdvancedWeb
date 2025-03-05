@@ -55,14 +55,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             if (match) {
                 const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                user.tokens = [refreshToken];
-                //if (!user.tokens) user.tokens = [refreshToken];
-                //else user.tokens.push(refreshToken);
+                //user.tokens = [refreshToken];
+                if (!user.tokens) user.tokens = [refreshToken];
+                else user.tokens.push(refreshToken);
                 await user.save();
-                res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
                 res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
                 res.status(200).json({ message: 'Auth successful' }).redirect('/');
-                return;
             }
             else {
                 res.status(401).json({ message: 'Auth failed' });
@@ -73,16 +72,18 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         res.status(500);
         return;
     }
-}
+};
 // Login External users - after login with google or github for tokens
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     try {
       const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-      user.tokens = [refreshToken];
+      //user.tokens = [refreshToken];
+      if (!user.tokens) user.tokens = [refreshToken];
+      else user.tokens.push(refreshToken);
       await user.save();
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.status(200).json({ message: 'Auth successful' });
     } catch (error) {
@@ -93,7 +94,7 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
 
 // Logout a user - remove refreshToken from user
 const logout = async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.headers.authorization?.split(" ")[1];
+    const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
         res.status(401).json({ message: 'Auth failed:refresh token not included in headers' });  
@@ -110,7 +111,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             if (!user) {
                 res.status(401).json({ message: 'invalid request' });
                 return;
-            }
+            }  
 
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {
 
@@ -123,7 +124,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             else {
                 user.tokens.splice(user.tokens.indexOf(refreshToken as string), 1);
                 await user.save();
-                res.clearCookie('token');
+                res.clearCookie('accessToken');
                 res.clearCookie('refreshToken');
                 res.status(200).json({ message: 'Logout successful' });
                 return;
@@ -144,7 +145,7 @@ type Payload = {
 
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies.token as string ; 
+    const token = req.cookies.accessToken as string ; 
     if (!token) {
         res.status(401).json({ message: 'Auth failed: No authorization header' });
         return;
@@ -167,30 +168,36 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
-    const refreshToken = req.headers.authorization?.split(" ")[1];
+    const refreshToken = req.cookies.refreshToken as string;
+    console.log(refreshToken);
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
          return;
     }
     jwt.verify(refreshToken as string, process.env.JWT_REFRESH_KEY as string, async (err: any, decoded: any) => {
         if (err) {
+            console.log(err);
             return res.status(401).json({ message: 'Auth failed' });
         }
         try {
             const user = await userModel.findById( decoded.userId ).select('+tokens');
             if (!user) {
+                console.log("2");
                 return res.status(401).json({ message: 'Invalid request: User not found' });
             }
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {           
                 user.tokens = [""];
                 await user.save();
+                console.log("3");
                 return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
                 const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
                 user.tokens[user.tokens.indexOf(refreshToken as string)] = newRefreshToken;
                 await user.save();
-                return res.status(200).json({ message: 'Auth successful', accessToken: newToken, refreshToken: newRefreshToken });
+                res.cookie('accessToken', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+                return res.status(200).json({ message: 'Auth successful'});
             }
         } catch (error) {
             res.status(500).json({ error: error });
