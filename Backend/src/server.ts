@@ -12,6 +12,8 @@ import passport from '../passport-config';
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
 
 const options = {
   definition: {
@@ -43,6 +45,8 @@ const app = express();
 const corsOptions = {
   origin: 'http://localhost:3000', // Adjust this to your frontend URL
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+
 };
 
 app.use(cors(corsOptions));
@@ -52,6 +56,7 @@ if (!jwtSecret) {
   throw new Error("JWT_SECRET is not defined in the environment variables");
 }
 
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = mongoose.connection

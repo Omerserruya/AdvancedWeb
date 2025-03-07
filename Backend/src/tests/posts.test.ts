@@ -29,8 +29,25 @@ beforeAll(async () => {
   const user = await userModel.findOne({ email: testUser.email });
   testUser._id = (user?._id as mongoose.Types.ObjectId).toString();
   const testRes = await request(app).post("/auth/login").send(testUser);
-  testUser.accessToken = testRes.body.accessToken;
-  testUser.refreshToken = testRes.body.refreshToken;
+  expect(testRes.statusCode).toBe(200);
+    
+  expect(testRes.headers['set-cookie']).toBeDefined();
+  const cookies = testRes.headers['set-cookie'] as unknown as string[];
+
+  // Assuming cookies contain accessToken and refreshToken
+  const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+  const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+  // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+  const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+  const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+
+  expect(accessTokenValue).toBeDefined();
+  expect(refreshTokenValue).toBeDefined();
+  
+  testUser.accessToken = accessTokenValue;
+  testUser.refreshToken = refreshTokenValue;
+
 });
 
 afterAll((done) => {
@@ -46,7 +63,7 @@ describe("Posts Tests", () => {
   });
 
   test("Test Create Post", async () => {
-    const response = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const response = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -64,7 +81,7 @@ describe("Posts Tests", () => {
       throw new Error("Create post error");
     });
 
-    const response = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const response = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -90,7 +107,7 @@ describe("Posts Tests", () => {
 
   test("Test Get Post By ID - Success", async () => {
     // Create a new post
-    const createResponse = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const createResponse = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -123,7 +140,7 @@ describe("Posts Tests", () => {
 
   test("Test update post - success", async () => {
     expect(postId).toBeDefined(); // Ensure postId is defined
-    const response = await request(app).put("/posts/" + postId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const response = await request(app).put("/posts/" + postId).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Updated Test Post",
         content: "Updated Test Content",
@@ -135,13 +152,13 @@ describe("Posts Tests", () => {
 
   test("Test delete post - success", async () => {
     expect(postId).toBeDefined(); // Ensure postId is defined
-    const response = await request(app).delete("/posts/" + postId).set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+    const response = await request(app).delete("/posts/" + postId).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
     expect(response.statusCode).toBe(200);
   });
 
   test("Test delete post - fail (not owner)", async () => {
     // Create a new post with testUser
-    const createResponse = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const createResponse = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -157,10 +174,25 @@ describe("Posts Tests", () => {
     } as User;
     await request(app).post("/auth/register").send(otherUser);
     const otherUserRes = await request(app).post("/auth/login").send(otherUser);
-    otherUser.accessToken = otherUserRes.body.accessToken;
-    otherUser.refreshToken = otherUserRes.body.refreshToken;
-
-    const response = await request(app).delete("/posts/" + newPostId).set({ authorization: otherUser.accessToken + " " + otherUser.refreshToken });
+    expect(otherUserRes.statusCode).toBe(200);
+    
+    expect(otherUserRes.headers['set-cookie']).toBeDefined();
+    const cookies = otherUserRes.headers['set-cookie'] as unknown as string[];
+  
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+  
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+  
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+    
+    otherUser.accessToken = accessTokenValue;
+    otherUser.refreshToken = refreshTokenValue;
+    const response = await request(app).delete("/posts/" + newPostId).set('Cookie',[`accessToken=${otherUser.accessToken};refreshToken=${otherUser.refreshToken}`]);
     expect(response.statusCode).toBe(403);
     expect(response.body.message).toBe("Access denied");
   });
@@ -168,14 +200,14 @@ describe("Posts Tests", () => {
   test("Test delete post - post not found", async () => {
     // Attempt to delete a non-existent post
     const nonExistentPostId = new mongoose.Types.ObjectId().toString();
-    const deleteResponse = await request(app).delete(`/posts/${nonExistentPostId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({ userId: testUser._id });
+    const deleteResponse = await request(app).delete(`/posts/${nonExistentPostId}`).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]).send({ userId: testUser._id });
     expect(deleteResponse.statusCode).toBe(404);
     expect(deleteResponse.body.message).toBe('Post not found');
   });
   
   test("Test delete post - error", async () => {
     // Create a new post
-    const createResponse = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const createResponse = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -189,7 +221,7 @@ describe("Posts Tests", () => {
       throw new Error("Error deleting post");
     });
   
-    const deleteResponse = await request(app).delete(`/posts/${newPostId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken }).send({ userId: testUser._id });
+    const deleteResponse = await request(app).delete(`/posts/${newPostId}`).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]).send({ userId: testUser._id });
     expect(deleteResponse.statusCode).toBe(500);
     expect(deleteResponse.body.message).toBe("Error deleting post");
   });
@@ -197,7 +229,7 @@ describe("Posts Tests", () => {
   test("Test update post - post not found", async () => {
     // Attempt to update a non-existent post
     const nonExistentPostId = new mongoose.Types.ObjectId().toString();
-    const response = await request(app).put(`/posts/${nonExistentPostId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const response = await request(app).put(`/posts/${nonExistentPostId}`).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Updated Test Post",
         content: "Updated Test Content",
@@ -209,7 +241,7 @@ describe("Posts Tests", () => {
   
   test("Test update post - access denied", async () => {
     // Create a new post with testUser
-    const createResponse = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const createResponse = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -226,11 +258,26 @@ describe("Posts Tests", () => {
     } as User;
     await request(app).post("/auth/register").send(otherUser);
     const otherUserRes = await request(app).post("/auth/login").send(otherUser);
-    otherUser.accessToken = otherUserRes.body.accessToken;
-    otherUser.refreshToken = otherUserRes.body.refreshToken;
+    expect(otherUserRes.statusCode).toBe(200);
+    
+    expect(otherUserRes.headers['set-cookie']).toBeDefined();
+    const cookies = otherUserRes.headers['set-cookie'] as unknown as string[];
   
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+  
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+  
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+    
+    otherUser.accessToken = accessTokenValue;
+    otherUser.refreshToken = refreshTokenValue;
     // Attempt to update the post with a different user
-    const response = await request(app).put(`/posts/${newPostId}`).set({ authorization: otherUser.accessToken + " " + otherUser.refreshToken })
+    const response = await request(app).put(`/posts/${newPostId}`).set('Cookie',[`accessToken=${otherUser.accessToken};refreshToken=${otherUser.refreshToken}`])
       .send({
         title: "Updated Test Post",
         content: "Updated Test Content",
@@ -242,7 +289,7 @@ describe("Posts Tests", () => {
   
   test("Test update post - error", async () => {
     // Create a new post
-    const createResponse = await request(app).post("/posts").set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const createResponse = await request(app).post("/posts").set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Test Post",
         content: "Test Content",
@@ -256,7 +303,7 @@ describe("Posts Tests", () => {
       throw new Error("Error updating post");
     });
   
-    const response = await request(app).put(`/posts/${newPostId}`).set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    const response = await request(app).put(`/posts/${newPostId}`).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         title: "Updated Test Post",
         content: "Updated Test Content",
