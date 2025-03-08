@@ -17,47 +17,55 @@ passport.deserializeUser(async (id: string, done: (err: any, user?: any) => void
 });
 
 // GitHub Strategy
-passport.use(new GitHubStrategy({
-  clientID: process.env.GITHUB_CLIENT_ID as string,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-  callbackURL: "/auth/github/callback",
-  scope: ['user:email'] // Request the user:email scope
-}, async (accessToken: string, refreshToken: string, profile: GitHubProfile, done: (err: any, user?: any) => void) => {
-  try {
-    let user = await userModel.findOne({ githubId: profile.id });
-    if (!user) {
-      // Fetch the user's email addresses
-      const emails = profile.emails || [];
-      const primaryEmail = emails[0]?.value;
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      callbackURL: process.env.GITHUB_CALLBACK_URL!,
+    },
+    async (accessToken: string, refreshToken: string, profile: GitHubProfile, done: (err: any, user?: any) => void) => {
+      try {
+        let user = await userModel.findOne({ githubId: profile.id });
+        if (!user) {
+          // Fetch the user's email addresses
+          const emails = profile.emails || [];
+          const primaryEmail = emails[0]?.value;
 
-      user = await userModel.create({
-        githubId: profile.id,
-        username: profile.username,
-        email: primaryEmail // Ensure email is set if available
-      });
+          user = await userModel.create({
+            githubId: profile.id,
+            username: profile.username,
+            email: primaryEmail // Ensure email is set if available
+          });
+        }
+        done(null, user);
+      } catch (err) {
+        done(err, null);
+      }
     }
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-}));
-
+  )
+);
 
 // Google Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID as string,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-  callbackURL: "/auth/google/callback"
-}, async (token: string, tokenSecret: string, profile: GoogleProfile, done: (err: any, user?: any) => void) => {
-  try {
-    let user = await userModel.findOne({ googleId: profile.id });
-    if (!user) {
-      user = await userModel.create({ googleId: profile.id, username: profile.name?.givenName, email: profile.emails?.[0].value });
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL!,
+    },
+    async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: (err: any, user?: any) => void) => {
+      try {
+        let user = await userModel.findOne({ googleId: profile.id });
+        if (!user) {
+          user = await userModel.create({ googleId: profile.id, username: profile.name?.givenName, email: profile.emails?.[0].value });
+        }
+        done(null, user);
+      } catch (err) {
+        done(err, null);
+      }
     }
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-}));
+  )
+);
 
 export default passport;
