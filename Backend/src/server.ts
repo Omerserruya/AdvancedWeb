@@ -70,20 +70,29 @@ app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
+const mongoOptions = {
+  user: process.env.MONGO_USER,          // MongoDB username
+  pass: process.env.MONGO_PASSWORD,      // MongoDB password
+  useNewUrlParser: true,     // Parse the URL using the new parser
+  useUnifiedTopology: true  // Use the new topology engine (recommended)
+};
+
 const initApp = () => {
   return new Promise<Express>((resolve, reject) => {
     if (!process.env.MONGODB_URL) {
       reject("DB_CONNECT is not defined in .env file");
     } else {
       mongoose
-        .connect(process.env.MONGODB_URL)
-        .then(() => {
-          resolve(app);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    }
+      .connect(process.env.MONGODB_URL, mongoOptions)
+      .then(() => {
+        console.log('MongoDB connection successful');
+        resolve(app);
+      })
+      .catch((error) => {
+        console.error('MongoDB connection error:', error);
+        reject(error);
+      });
+        }
   });
 };
 
