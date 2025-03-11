@@ -1,36 +1,35 @@
 version: '3.8'
 
 services:
-  frontend:
+  app-frontend:  # Named service for frontend
     build:
-      context: ./frontend
+      context: ./Frontend
       dockerfile: Dockerfile
     volumes:
-      - ./frontend:/app
+      - ./Frontend:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - PORT=3000
     ports:
       - "3000:3000"
 
-  backend:
+  app-backend:   # Named service for backend
     build:
-      context: ./backend
+      context: ./Backend
       dockerfile: Dockerfile
     volumes:
-      # Mount everything except node_modules
-      - ./backend/src:/app/src
-      - ./backend/package.json:/app/package.json
-      - ./backend/package-lock.json:/app/package-lock.json
-      - ./backend/tsconfig.json:/app/tsconfig.json
-      - ./backend/.env.dev:/app/.env.dev
-    networks:
-      - default
-      - javascript-node-mongo-2_devcontainer_default  # Make sure this matches exactly your MongoDB network name
+      - ./Backend/src:/app/src
+      - ./Backend/package.json:/app/package.json
+      - ./Backend/package-lock.json:/app/package-lock.json
+      - ./Backend/tsconfig.json:/app/tsconfig.json
+      - ./Backend/.env.dev:/app/.env.dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # For host MongoDB connection
     ports:
       - "5000:5000"
 
-  nginx:
+  app-nginx:     # Named service for nginx
     image: nginx:alpine
     ports:
       - "80:80"
@@ -38,9 +37,5 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
-      - frontend
-      - backend 
-
-networks:
-  javascript-node-mongo-2_devcontainer_default:
-    external: true 
+      - app-frontend
+      - app-backend
