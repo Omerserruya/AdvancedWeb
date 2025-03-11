@@ -12,6 +12,8 @@ import passport from '../passport-config';
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
 
 const options = {
   definition: {
@@ -43,6 +45,8 @@ const app = express();
 const corsOptions = {
   origin: 'http://localhost:3000', // Adjust this to your frontend URL
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+
 };
 
 app.use(cors(corsOptions));
@@ -52,6 +56,7 @@ if (!jwtSecret) {
   throw new Error("JWT_SECRET is not defined in the environment variables");
 }
 
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = mongoose.connection
@@ -65,20 +70,29 @@ app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
+const mongoOptions = {
+  user: process.env.MONGO_USER,          // MongoDB username
+  pass: process.env.MONGO_PASSWORD,      // MongoDB password
+  useNewUrlParser: true,     // Parse the URL using the new parser
+  useUnifiedTopology: true  // Use the new topology engine (recommended)
+};
+
 const initApp = () => {
   return new Promise<Express>((resolve, reject) => {
     if (!process.env.MONGODB_URL) {
       reject("DB_CONNECT is not defined in .env file");
     } else {
       mongoose
-        .connect(process.env.MONGODB_URL)
-        .then(() => {
-          resolve(app);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    }
+      .connect(process.env.MONGODB_URL)
+      .then(() => {
+        console.log('MongoDB connection successful');
+        resolve(app);
+      })
+      .catch((error) => {
+        console.error('MongoDB connection error:', error);
+        reject(error);
+      });
+        }
   });
 };
 

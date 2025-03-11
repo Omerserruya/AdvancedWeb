@@ -32,13 +32,30 @@ beforeAll(async () => {
   const user = await userModel.findOne({ email: testUser.email });
   testUser._id = (user?._id as mongoose.Types.ObjectId).toString();
   const testRes = await request(app).post("/auth/login").send(testUser);
-  testUser.accessToken = testRes.body.accessToken;
-  testUser.refreshToken = testRes.body.refreshToken;
+  expect(testRes.statusCode).toBe(200);
+    
+  expect(testRes.headers['set-cookie']).toBeDefined();
+  const cookies = testRes.headers['set-cookie'] as unknown as string[];
+
+  // Assuming cookies contain accessToken and refreshToken
+  const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+  const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+
+  // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+  const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+  const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+
+  expect(accessTokenValue).toBeDefined();
+  expect(refreshTokenValue).toBeDefined();
+  
+  testUser.accessToken = accessTokenValue;
+  testUser.refreshToken = refreshTokenValue;
+
 
   // Create a test post
   const postResponse = await request(app)
     .post("/posts")
-    .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+    .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
     .send({
       title: "Test Post",
       content: "Test Content",
@@ -56,7 +73,7 @@ describe("Comments Tests", () => {
   test("Test Create Comment", async () => {
     const response = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -71,7 +88,7 @@ describe("Comments Tests", () => {
     const fakePostId = new mongoose.Types.ObjectId().toString();
     const response = await request(app)
       .post(`/posts/${fakePostId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -87,7 +104,7 @@ describe("Comments Tests", () => {
 
     const response = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -145,7 +162,7 @@ describe("Comments Tests", () => {
   test("Test Update Comment - Success", async () => {
     const response = await request(app)
       .put(`/posts/${postId}/comments/${commentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Updated Comment"
       });
@@ -158,7 +175,7 @@ describe("Comments Tests", () => {
     const nonExistentCommentId = new mongoose.Types.ObjectId().toString();
     const response = await request(app)
       .put(`/posts/${postId}/comments/${nonExistentCommentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Updated Comment"
       });
@@ -174,7 +191,7 @@ describe("Comments Tests", () => {
 
     const response = await request(app)
       .put(`/posts/${postId}/comments/${commentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Updated Comment"
       });
@@ -191,12 +208,28 @@ describe("Comments Tests", () => {
     } as User;
     await request(app).post("/auth/register").send(otherUser);
     const otherUserRes = await request(app).post("/auth/login").send(otherUser);
-    otherUser.accessToken = otherUserRes.body.accessToken;
-    otherUser.refreshToken = otherUserRes.body.refreshToken;
+    expect(otherUserRes.statusCode).toBe(200);
+    
+    expect(otherUserRes.headers['set-cookie']).toBeDefined();
+    const cookies = otherUserRes.headers['set-cookie'] as unknown as string[];
+  
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+  
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+  
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+    
+    otherUser.accessToken = accessTokenValue;
+    otherUser.refreshToken = refreshTokenValue;
 
     const response = await request(app)
       .put(`/posts/${postId}/comments/${commentId}`)
-      .set({ authorization: otherUser.accessToken + " " + otherUser.refreshToken })
+      .set('Cookie',[`accessToken=${otherUser.accessToken};refreshToken=${otherUser.refreshToken}`])
       .send({
         content: "Updated Comment"
       });
@@ -209,7 +242,7 @@ describe("Comments Tests", () => {
     const nonExistentCommentId = new mongoose.Types.ObjectId().toString();
     const response = await request(app)
       .delete(`/posts/${postId}/comments/${nonExistentCommentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
 
     expect(response.statusCode).toBe(404);
     expect(response.body.message).toBe('Comment not found');
@@ -221,7 +254,7 @@ describe("Comments Tests", () => {
     // Create a new comment with testUser
     const createResponse = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -235,13 +268,29 @@ describe("Comments Tests", () => {
     } as User;
     await request(app).post("/auth/register").send(otherUser);
     const otherUserRes = await request(app).post("/auth/login").send(otherUser);
-    otherUser.accessToken = otherUserRes.body.accessToken;
-    otherUser.refreshToken = otherUserRes.body.refreshToken;
+    expect(otherUserRes.statusCode).toBe(200);
+    
+    expect(otherUserRes.headers['set-cookie']).toBeDefined();
+    const cookies = otherUserRes.headers['set-cookie'] as unknown as string[];
+  
+    // Assuming cookies contain accessToken and refreshToken
+    const accessToken = cookies.find(cookie => cookie.startsWith('accessToken=')) as string;
+    const refreshToken = cookies.find(cookie => cookie.startsWith('refreshToken=')) as string;
+  
+    // Extract the token values from the cookie strings (cookie format is "cookieName=value; ...")
+    const accessTokenValue = accessToken.split(';')[0].split('=')[1];
+    const refreshTokenValue = refreshToken.split(';')[0].split('=')[1];
+  
+    expect(accessTokenValue).toBeDefined();
+    expect(refreshTokenValue).toBeDefined();
+    
+    otherUser.accessToken = accessTokenValue;
+    otherUser.refreshToken = refreshTokenValue;
 
     // Attempt to delete the comment with a different user
     const deleteResponse = await request(app)
       .delete(`/posts/${postId}/comments/${newCommentId}`)
-      .set({ authorization: otherUser.accessToken + " " + otherUser.refreshToken });
+      .set('Cookie',[`accessToken=${otherUser.accessToken};refreshToken=${otherUser.refreshToken}`])
 
     expect(deleteResponse.statusCode).toBe(403);
     expect(deleteResponse.body.message).toBe('Access denied');
@@ -251,7 +300,7 @@ describe("Comments Tests", () => {
     // Create a new comment
     const createResponse = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -264,7 +313,7 @@ describe("Comments Tests", () => {
 
     const deleteResponse = await request(app)
       .delete(`/posts/${postId}/comments/${newCommentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
 
     expect(deleteResponse.statusCode).toBe(500);
   });
@@ -273,7 +322,7 @@ describe("Comments Tests", () => {
     // Create a new comment
     const createResponse = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken })
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`])
       .send({
         content: "Test Comment"
       });
@@ -281,7 +330,7 @@ describe("Comments Tests", () => {
 
     const response = await request(app)
       .delete(`/posts/${postId}/comments/${newCommentId}`)
-      .set({ authorization: testUser.accessToken + " " + testUser.refreshToken });
+      .set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]);
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe("Comment deleted successfully");

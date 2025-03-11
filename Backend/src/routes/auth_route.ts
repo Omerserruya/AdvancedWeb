@@ -140,6 +140,7 @@ authRoute.post('/refresh', auth.refreshToken);
  *         description: Unauthorized
  */
 authRoute.post('/test', authentification, auth.test);
+authRoute.get('/test', authentification, auth.test);
 
 // GitHub authentication routes
 authRoute.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));

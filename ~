@@ -1,0 +1,15 @@
+#Add Login and Register UI
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Tue Mar 11 22:16:32 2025 +0200
+#
+# On branch fontend/login
+# Last command done (1 command done):
+#    pick 19be999 Add Login and Register UI
+# No commands remaining.
+# You are currently editing a commit while rebasing branch 'fontend/login' on 'e80569b'.
+#
+# Changes to be committed:
+#	deleted:    Backend/.env.prod
