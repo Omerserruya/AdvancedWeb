@@ -19,6 +19,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { StyledBackground, StyledCard, SocialButton } from '../styles/AuthStyles';
+import { useUser } from '../contexts/UserContext';
 
 interface LoginFormData {
   email: string;
@@ -27,6 +28,7 @@ interface LoginFormData {
 
 const Login = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -73,7 +75,11 @@ const Login = () => {
       }
 
       const userData = await response.json();
-      localStorage.setItem('user', JSON.stringify(userData));
+      setUser({
+        _id: userData._id,
+        username: userData.username,
+        email: userData.email,
+      });
 
       setSnackbar({
         open: true,

@@ -55,13 +55,23 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             if (match) {
                 const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
                 const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                //user.tokens = [refreshToken];
+                
                 if (!user.tokens) user.tokens = [refreshToken];
                 else user.tokens.push(refreshToken);
                 await user.save();
+
                 res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
                 res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
-                res.status(200).json({ message: 'Auth successful' }).redirect('/');
+                
+                // Return user data with the response
+                res.status(200).json({
+                    message: 'Auth successful',
+                    user: {
+                        _id: user._id,
+                        username: user.username,
+                        email: user.email,
+                    }
+                });
             }
             else {
                 res.status(401).json({ message: 'Auth failed' });

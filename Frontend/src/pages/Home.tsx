@@ -1,6 +1,7 @@
 import React from 'react';
-import { Container, Box, Typography } from '@mui/material';
+import { Container, Box, Typography, Button } from '@mui/material';
 import { Post } from '../components/Post';
+import { useUser } from '../contexts/UserContext';
 
 interface SampleComment {
   id: string;
@@ -49,8 +50,21 @@ Try it out and let me know what you think in the comments below!`,
 };
 
 const Home = () => {
+  const { user, logout } = useUser();
+
   return (
     <Container maxWidth="lg">
+      <Box sx={{ textAlign: 'center', mb: 6, mt: 2 }}>
+        <Typography variant="h4">
+          Welcome, {user?.username}!
+        </Typography>
+        <Typography variant="body1">
+          {user?.email}
+        </Typography>
+        <Button onClick={logout}>
+          Logout
+        </Button>
+      </Box>
       <Box sx={{ textAlign: 'center', mb: 6, mt: 2 }}>
         <Typography 
           variant="h2" 
