@@ -89,17 +89,27 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
     try {
       const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-      //user.tokens = [refreshToken];
+      
       if (!user.tokens) user.tokens = [refreshToken];
       else user.tokens.push(refreshToken);
       await user.save();
+      
       res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
-      res.status(200).json({ message: 'Auth successful' });
+      
+      // Return user data with the response, matching the regular login response
+      res.status(200).json({
+        message: 'Auth successful',
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+        }
+      });
     } catch (error) {
       next(error);
     }
-  };
+};
   
 
 // Logout a user - remove refreshToken from user
@@ -214,4 +224,34 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
 const test = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'Test successful' });
 };
-export default { login, register, logout, refreshToken , test, loginExternal};
+
+const getCurrentUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId; // This should be set by your auth middleware
+        const user = await userModel.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user data' });
+    }
+};
+
+export default { 
+    login, 
+    register, 
+    logout, 
+    refreshToken, 
+    test, 
+    loginExternal,
+    getCurrentUser 
+};

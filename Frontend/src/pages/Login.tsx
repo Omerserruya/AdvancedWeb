@@ -102,6 +102,14 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = '/api/auth/google';
+  };
+
+  const handleGithubLogin = () => {
+    window.location.href = '/api/auth/github';
+  };
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -219,7 +227,7 @@ const Login = () => {
                 startIcon={<GoogleIcon />}
                 variant="outlined"
                 color="primary"
-                onClick={() => window.location.href = '/api/auth/google'}
+                onClick={handleGoogleLogin}
               >
                 Continue with Google
               </SocialButton>
@@ -228,7 +236,7 @@ const Login = () => {
                 startIcon={<GitHubIcon />}
                 variant="outlined"
                 color="inherit"
-                onClick={() => window.location.href = '/api/auth/github'}
+                onClick={handleGithubLogin}
                 sx={{ mt: 2 }}
               >
                 Continue with GitHub

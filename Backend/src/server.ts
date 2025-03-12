@@ -83,7 +83,7 @@ const initApp = () => {
       reject("DB_CONNECT is not defined in .env file");
     } else {
       mongoose
-      .connect(process.env.MONGODB_URL)
+      .connect(process.env.MONGODB_URL,mongoOptions)
       .then(() => {
         console.log('MongoDB connection successful');
         resolve(app);
