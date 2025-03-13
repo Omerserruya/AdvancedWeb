@@ -43,7 +43,7 @@ const specs = swaggerJsDoc(options);
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:3000', // Adjust this to your frontend URL
+  origin:"http://node21.cs.colman.ac.il", // Adjust this to your frontend URL
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 
