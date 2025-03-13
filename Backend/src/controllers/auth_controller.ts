@@ -90,22 +90,14 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
       
-      if (!user.tokens) user.tokens = [refreshToken];
-      else user.tokens.push(refreshToken);
+      user.tokens = [refreshToken];
       await user.save();
       
-      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
       
-      // Return user data with the response, matching the regular login response
-      res.status(200).json({
-        message: 'Auth successful',
-        user: {
-          _id: user._id,
-          username: user.username,
-          email: user.email,
-        }
-      });
+      // Redirect to home page using relative path
+      res.redirect('/home');
     } catch (error) {
       next(error);
     }
