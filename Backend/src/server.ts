@@ -1,6 +1,7 @@
 // Omer-Serruya-322570243-Ron-Elmalech-322766809
 import dotenv from "dotenv"
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import express, { Express } from "express";
@@ -13,6 +14,9 @@ import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import multer from 'multer';
+import { upload } from './utils/imageHandler'; // We'll create this
 
 
 const options = {
@@ -69,6 +73,12 @@ app.use('/auth',authRoute)
 app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Error handling for file uploads
+
 
 const mongoOptions = {
   user: process.env.MONGO_USER,          // MongoDB username

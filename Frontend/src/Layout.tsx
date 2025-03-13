@@ -1,10 +1,17 @@
 import React from "react";
 import SideMenu from "./components/SideMenuCustom/SideMenu";
-import { Box } from "@mui/material";
+import { Box, Fab, Tooltip } from "@mui/material";
 import Stack from "@mui/material/Stack";
-import { Home } from "./pages/Home";
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import AddIcon from '@mui/icons-material/Add';
 
 function Layout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Don't show FAB on the add-post page
+  const showAddButton = location.pathname !== '/add-post';
+
   return (
     <Stack direction="row" spacing={2}>
       <Box
@@ -22,10 +29,27 @@ function Layout() {
           bgcolor: 'background.secondary',
           height: '100vh',
           overflow: 'auto',
-          p: 2
+          p: 2,
+          position: 'relative', // Added for FAB positioning
         }}
       >
-        <Home />
+        <Outlet />
+        {showAddButton && (
+          <Tooltip title="Create new post" placement="left">
+            <Fab
+              color="primary"
+              aria-label="add"
+              onClick={() => navigate('/add-post')}
+              sx={{
+                position: 'fixed',
+                bottom: 24,
+                right: 24,
+              }}
+            >
+              <AddIcon />
+            </Fab>
+          </Tooltip>
+        )}
       </Box>
     </Stack>
   );

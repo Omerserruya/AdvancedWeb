@@ -13,6 +13,7 @@ import {
   Collapse,
   Stack,
   Divider,
+  CardMedia,
 } from '@mui/material';
 import {
   Favorite as FavoriteIcon,
@@ -21,21 +22,17 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
-
-interface Comment {
-  id: string;
-  user: string;
-  content: string;
-  timestamp: string;
-}
+import { CommentComponent, PostComment } from './Comment';
+import { CommentsSection } from './CommentsSection';
 
 interface PostProps {
   title: string;
   content: string;
   author: string;
   timestamp: string;
+  imageUrl?: string;
   initialLikes?: number;
-  initialComments?: Comment[];
+  initialComments?: PostComment[];
 }
 
 export const Post: React.FC<PostProps> = ({
@@ -43,31 +40,28 @@ export const Post: React.FC<PostProps> = ({
   content,
   author,
   timestamp,
+  imageUrl,
   initialLikes = 0,
   initialComments = [],
 }) => {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<PostComment[]>(initialComments);
 
   const handleLike = () => {
     setLiked(!liked);
     setLikes(prev => liked ? prev - 1 : prev + 1);
   };
 
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        user: 'Current User', // This would come from auth context in a real app
-        content: newComment,
-        timestamp: new Date().toLocaleString(),
-      };
-      setComments(prev => [...prev, comment]);
-      setNewComment('');
-    }
+  const handleAddComment = (newCommentContent: string) => {
+    const comment: PostComment = {
+      id: Date.now().toString(),
+      user: 'Current User', // This would come from auth context in a real app
+      content: newCommentContent,
+      timestamp: new Date().toLocaleString(),
+    };
+    setComments(prev => [...prev, comment]);
   };
 
   // Generate initials for avatar
@@ -90,6 +84,7 @@ export const Post: React.FC<PostProps> = ({
         borderRadius: 2,
       }}
     >
+      {imageUrl && <CardMedia component="img" height="140" image={imageUrl} alt={title} />}
       <CardHeader
         avatar={
           <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -143,59 +138,12 @@ export const Post: React.FC<PostProps> = ({
         </Typography>
       </CardActions>
 
-      <Collapse in={showComments} timeout="auto" unmountOnExit>
-        <Divider />
-        <Box sx={{ p: 2 }}>
-          <Stack spacing={2}>
-            {comments.map(comment => (
-              <Box key={comment.id}>
-                <Stack direction="row" spacing={1} alignItems="flex-start">
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
-                    {getInitials(comment.user)}
-                  </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="subtitle2">
-                        {comment.user}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {comment.timestamp}
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body2" color="text.primary">
-                      {comment.content}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-
-          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Write a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddComment();
-                }
-              }}
-            />
-            <IconButton
-              color="primary"
-              onClick={handleAddComment}
-              disabled={!newComment.trim()}
-              sx={{ alignSelf: 'center' }}
-            >
-              <SendIcon />
-            </IconButton>
-          </Box>
-        </Box>
-      </Collapse>
+      <Divider />
+      <CommentsSection 
+        comments={comments}
+        showComments={showComments}
+        onAddComment={handleAddComment}
+      />
     </Card>
   );
 }; 
