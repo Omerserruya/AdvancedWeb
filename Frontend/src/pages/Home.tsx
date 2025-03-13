@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Container, Box, Typography, Button } from '@mui/material';
 import { Post } from '../components/Post';
 import { useUser } from '../contexts/UserContext';
@@ -11,46 +12,60 @@ interface SampleComment {
 }
 
 interface SamplePost {
+  _id: string;
   title: string;
   content: string;
-  author: string;
+  userID: string;
   timestamp: string;
   initialLikes: number;
   initialComments: SampleComment[];
 }
 
-const samplePost: SamplePost = {
-  title: "Getting Started with Material-UI",
-  content: `Material-UI is a popular React UI framework that implements Google's Material Design. It includes a comprehensive collection of prebuilt components that are ready for use in production right out of the box.
+export const Feed: React.FC = () => {
+  const [posts, setPosts] = useState<SamplePost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  
+  const userId = localStorage.getItem('userId'); // Adjust based on your auth implementation
 
-Here are some key features:
-• Comprehensive suite of UI tools
-• Customizable theme
-• Built-in accessibility
-• Great documentation
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/posts');
+        const transformedPosts = response.data.map((post: any) => ({
+          _id: post._id,
+          title: post.title,
+          content: post.content,
+          userID: post.userID,
+          timestamp: new Date(post.createdAt).toLocaleString(),
+          initialLikes: 0,
+          initialComments: []
+        }));
+        setPosts(transformedPosts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        setError('Failed to load posts');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-Try it out and let me know what you think in the comments below!`,
-  author: "John Doe",
-  timestamp: new Date().toLocaleString(),
-  initialLikes: 42,
-  initialComments: [
-    {
-      id: '1',
-      user: 'Alice Smith',
-      content: 'Great overview! Looking forward to trying this out.',
-      timestamp: '2 hours ago'
-    },
-    {
-      id: '2',
-      user: 'Bob Johnson',
-      content: "I've been using MUI for a while now and can confirm it's awesome!",
-      timestamp: '1 hour ago'
+    fetchPosts();
+  }, []);
+
+  const handleEdit = (postId: string) => {
+    // Implement edit functionality
+  };
+
+  const handleDelete = async (postId: string) => {
+    try {
+      await axios.delete(`/api/posts/${postId}`);
+      setPosts(posts.filter(post => post._id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
     }
-  ]
-};
-
-const Home = () => {
-  const { user, logout } = useUser();
+  };
 
   return (
     <Container maxWidth="lg">
@@ -87,8 +102,45 @@ const Home = () => {
           Exploring the Latest in Technology, Development, and Innovation
         </Typography>
       </Box>
+      
+      {loading && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography>Loading posts...</Typography>
+        </Box>
+      )}
+      
+      {error && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="error">{error}</Typography>
+        </Box>
+      )}
+
       <Box sx={{ py: 4 }}>
-        <Post {...samplePost} />
+        {posts.map((post) => (
+          <Box key={post._id} sx={{ mb: 4 }}>
+            <Post 
+              title={post.title}
+              content={post.content}
+              author={post.userID}
+              timestamp={post.timestamp}
+              initialLikes={post.initialLikes}
+              initialComments={post.initialComments}
+            />
+            {post.userID === userId && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Button variant="outlined" onClick={() => handleEdit(post._id)}>Edit</Button>
+                <Button 
+                  variant="outlined" 
+                  color="error" 
+                  onClick={() => handleDelete(post._id)}
+                  sx={{ ml: 2 }}
+                >
+                  Delete
+                </Button>
+              </Box>
+            )}
+          </Box>
+        ))}
       </Box>
     </Container>
   );

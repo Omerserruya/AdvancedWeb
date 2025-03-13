@@ -133,3 +133,6 @@ out
 
 # Coverage
 coverage
+
+uploads/*
+!uploads/.gitkeep
