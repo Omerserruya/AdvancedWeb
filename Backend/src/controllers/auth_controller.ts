@@ -58,7 +58,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 //user.tokens = [refreshToken];
                 if (!user.tokens) user.tokens = [refreshToken];
                 else user.tokens.push(refreshToken);
+                //user.tokens = [refreshToken];
+                if (!user.tokens) user.tokens = [refreshToken];
+                else user.tokens.push(refreshToken);
                 await user.save();
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
                 res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
                 res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
                 res.status(200).json({ message: 'Auth successful' }).redirect('/');
@@ -70,9 +74,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         }
     } catch (er) {
         res.status(500);
-        res.status(500);
         return;
     }
+};
 };
 // Login External users - after login with google or github for tokens
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
@@ -83,7 +87,12 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       //user.tokens = [refreshToken];
       if (!user.tokens) user.tokens = [refreshToken];
       else user.tokens.push(refreshToken);
+      //user.tokens = [refreshToken];
+      if (!user.tokens) user.tokens = [refreshToken];
+      else user.tokens.push(refreshToken);
       await user.save();
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
       res.status(200).json({ message: 'Auth successful' });
@@ -95,6 +104,7 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
 
 // Logout a user - remove refreshToken from user
 const logout = async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies.refreshToken;
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
@@ -113,6 +123,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
                 res.status(401).json({ message: 'invalid request' });
                 return;
             }  
+            }  
 
             else if (!user.tokens || !user.tokens.includes(refreshToken as string)) {
 
@@ -125,6 +136,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             else {
                 user.tokens.splice(user.tokens.indexOf(refreshToken as string), 1);
                 await user.save();
+                res.clearCookie('accessToken');
                 res.clearCookie('accessToken');
                 res.clearCookie('refreshToken');
                 res.status(200).json({ message: 'Logout successful' });
@@ -147,13 +159,16 @@ type Payload = {
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.accessToken as string ; 
+    const token = req.cookies.accessToken as string ; 
     if (!token) {
+        res.status(401).json({ message: 'Auth failed: No credantials were given' });
         res.status(401).json({ message: 'Auth failed: No credantials were given' });
         return;
     }
     try {
         jwt.verify(token, process.env.JWT_KEY as string, (err, payload) => {
             if (err) {
+                res.status(401).json({ message: 'Auth failed' });
                 res.status(401).json({ message: 'Auth failed' });
                 return;
                 
@@ -169,6 +184,7 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
+    const refreshToken = req.cookies.refreshToken as string;
     const refreshToken = req.cookies.refreshToken as string;
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
