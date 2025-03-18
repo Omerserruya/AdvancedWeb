@@ -17,13 +17,13 @@ function App() {
       <UserProvider>
         <Routes>
           {/* Auth routes */}
-          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
           
           {/* Protected routes with Layout */}
           <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
             <Route path="/add-post" element={<AddPost />} />
             <Route path="/my-posts" element={<MyPosts />} />
