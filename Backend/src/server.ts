@@ -9,7 +9,7 @@ import postsRoute from "./routes/post_route";
 import healthRoute from "./routes/health_route";
 import usersRoute from "./routes/user_route";
 import authRoute from "./routes/auth_route";
-import passport from '../passport-config'; 
+import aiRoute from "./routes/ai_route";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
@@ -72,6 +72,7 @@ app.use('/health',healthRoute)
 app.use('/auth',authRoute)
 app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
+app.use('/ai',aiRoute)
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
 // Serve static files from uploads directory

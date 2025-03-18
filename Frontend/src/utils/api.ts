@@ -1,12 +1,25 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost',
+  baseURL: 'http://localhost',
   withCredentials: true, // This is crucial for sending cookies
-  headers: {
-    'Content-Type': 'application/json',
-  }
 });
+
+// Request interceptor to handle content type
+api.interceptors.request.use(
+  (config) => {
+    // Only set JSON content type if not a multipart/form-data
+    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
+    // If it's FormData, let Axios set the content type with boundary
+    // No need to log this each time
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Response interceptor for handling authentication errors
 api.interceptors.response.use(
@@ -14,19 +27,38 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    console.log('Response error status:', error.response?.status);
+    console.log('Available cookies:', document.cookie);
+
     // If error is 401 (Unauthorized) and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
+        console.log('Attempting to refresh token...');
+        
         // Try to refresh the token
-        await axios.post('/api/auth/refresh-token', {}, { 
+        const refreshResponse = await axios.post('/api/auth/refresh', {}, { 
           withCredentials: true // Important for cookies
         });
-        // Retry the original request
-        return api(originalRequest);
+        
+        console.log('Refresh response:', refreshResponse.status);
+        
+        // Only proceed if refresh was successful
+        if (refreshResponse.status === 200) {
+          console.log('Token refreshed successfully, retrying original request');
+          // Retry the original request
+          return api(originalRequest);
+        } else {
+          // If refresh doesn't return 200, clear user data and redirect
+          localStorage.removeItem('user_id');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
       } catch (refreshError) {
-        // If refresh fails, redirect to login
-        window.location.href = '/';
+        console.error('Refresh token error:', refreshError);
+        // If refresh fails, clear user data and redirect
+        localStorage.removeItem('user_id');
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

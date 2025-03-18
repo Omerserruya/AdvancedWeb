@@ -1,20 +1,41 @@
 import PropTypes from 'prop-types';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Drawer, { drawerClasses } from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-
+import { useUser } from '../../contexts/UserContext';
 import MenuContent from './MenuContent';
+import UserAvatar from '../UserAvatar';
 
 interface SideMenuMobileProps {
   open: boolean;
   toggleDrawer: (open: boolean) => () => void;
 }
 
+
 function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
+  const { setUser } = useUser();
+
+const handleLogout = async () => {
+  try {
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include', // Include cookies in the request
+    });
+
+    if (response.ok) {
+      setUser(null); // Clear user context
+      // Optionally, redirect to login or home
+      window.location.href = '/'; // Redirect to login page
+    } else {
+      console.error('Logout failed:', await response.json());
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
+};
+
   return (
     <Drawer
       anchor="right"
@@ -39,17 +60,8 @@ function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
             direction="row"
             sx={{ gap: 1, alignItems: 'center', flexGrow: 1, p: 1 }}
           >
-            <Avatar
-              sizes="small"
-              alt="Riley Carter"
-              src="/static/images/avatar/7.jpg"
-              sx={{ width: 24, height: 24 }}
-            />
-            <Typography component="p" variant="h6">
-              Riley Carter
-            </Typography>
+            <UserAvatar />
           </Stack>
-
         </Stack>
         <Divider />
         <Stack sx={{ flexGrow: 1 }}>
@@ -57,7 +69,7 @@ function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
           <Divider />
         </Stack>
         <Stack sx={{ p: 2 }}>
-          <Button variant="outlined" fullWidth startIcon={<LogoutRoundedIcon />}>
+          <Button variant="outlined" onClick={handleLogout} fullWidth startIcon={<LogoutRoundedIcon />}>
             Logout
           </Button>
         </Stack>

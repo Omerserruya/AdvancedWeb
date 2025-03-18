@@ -2,6 +2,9 @@ import express from "express";
 const usersRoute = express.Router();
 import userController from "../controllers/user_controller";
 import { authentification } from "../controllers/auth_controller";
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * @swagger
@@ -151,5 +154,47 @@ usersRoute.put('/:id', authentification, userController.updateUser);
  *         description: User not found
  */
 usersRoute.delete('/:id', authentification, userController.deleteUser);
+
+// Configure multer for avatar uploads
+const storage = multer.diskStorage({
+  destination: (req: any, file: any, cb: any) => {
+    const uploadDir = path.resolve('/app/uploads/users');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    console.log('Upload directory:', uploadDir); // Debug log
+    cb(null, uploadDir);
+  },
+  filename: (req: any, file: any, cb: any) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const filename = `avatar-${uniqueSuffix}${ext}`;
+    console.log('Generated filename:', filename); // Debug log
+    cb(null, filename);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req: any, file: any, cb: any) => {
+    console.log('Received file:', file.originalname, 'Type:', file.mimetype); // Debug log
+    // Accept only images
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed') as any);
+    }
+  }
+});
+
+// Add avatar upload route
+usersRoute.post(
+  '/:id/avatar', 
+  authentification, 
+  upload.single('avatar'), 
+  userController.uploadAvatar
+);
 
 export default usersRoute;

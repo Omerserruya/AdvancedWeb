@@ -9,26 +9,42 @@ export interface IUser extends Document {
   googleId?: string;
   username: string;
   email: string;
+  avatarUrl: string;
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
   tokens?: [String];
+  likedPosts?: [String]; // Array of post IDs liked by the user
   comparePassword(candidatePassword: string): Promise<boolean>;
+  
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
   username: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   email: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   password: {
     type: String,
-    required: false,
-    select: false
+    select: false,
+    required: false
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+    required: false
+  },
+  avatarUrl: {
+    type: String,
+    default: '', // Empty string as default
+    required: false
   },
   githubId: {
     type: String,
@@ -38,10 +54,9 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     type: String,
     required: false
   },
-  role: {
-    type: String,
-    enum: ["user", "admin"],
-    default: "user",
+  likedPosts: {
+    type: [String],
+    default: [],
     required: false
   },
   createdAt: {

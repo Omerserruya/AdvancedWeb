@@ -2,6 +2,15 @@ import userModel from "../models/user_model";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+
+// Configure multer for file uploads
+const upload = multer({
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
+  dest: 'uploads/', // Destination folder for uploads
+});
 
 // Helper function to create a new user
 const createUserHelper = async (username: string, email: string, password: string, role?: string) => {
@@ -28,33 +37,33 @@ const createUserHelper = async (username: string, email: string, password: strin
 
 const addUser = async (req: Request, res: Response) => {
   const { username, email, password, role } = req.body;
-  const { userId } = req.params;
-  const user = await userModel.findById(userId);
-  if(user?.role !== "admin" && role === "admin") {
-    res.status(403).json({ message: "Access denied" });
-    return;
-  }
+  
   // Validate required fields for the new user
   if (!username || !email || !password) {
-    res.status(400).json({ message: "Username, email, and password are required" });
-    return;
+    return res.status(400).json({ message: "Username, email, and password are required" });
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    res.status(400).json({ message: "Invalid email format" });
-    return;
+    return res.status(400).json({ message: "Invalid email format" });
   }
 
   try {
+    // Check if the authenticated user has admin privileges when creating an admin user
+    if (role === "admin") {
+      const authenticatedUser = await userModel.findById(req.params.userId);
+      if (!authenticatedUser || authenticatedUser.role !== "admin") {
+        return res.status(403).json({ message: "Access denied: Only admins can create admin users" });
+      }
+    }
+
     const newUser = await createUserHelper(username, email, password, role);
-    res.status(201).json(newUser);
+    return res.status(201).json(newUser);
   } catch (error: any) {
     if (error.message === "User already exists") {
-      res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message });
     } else {
-      res.status(500).json({ message: "Error creating user", error: error.message });
+      return res.status(500).json({ message: "Error creating user", error: error.message });
     }
   }
 };
-
 
 // Function to fetch all users 
 const getUsers = async (req: Request, res: Response) => {
@@ -91,29 +100,31 @@ const getUserById = async (req: Request, res: Response) => {
 // Function to update a user (self or admin access)
 const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { username, email, password }: {
+  const { username, email, password, avatarUrl }: {
     username?: string;
     email?: string;
     password?: string;
+    avatarUrl?: string;
   } = req.body;
+  
   try {
     // Find the user by ID
     const user = await userModel.findById(id);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
+      return res.status(404).json({ message: "User not found" });
     }
+    
     if (req.params.userId !== id) {
-      res.status(403).json({ message: "Access denied" });
-      return;
+      return res.status(403).json({ message: "Access denied" });
     }
+    
     if (Object.keys(req.body).length === 0) {
-      res.status(400).json({
-        message: "At least one field (e.g., username, email) is required to update",
+      return res.status(400).json({
+        message: "At least one field is required to update",
       });
-      return;
     }
-    // If password is provided in the request, include it in the update
+    
+    // If password is provided in the request, hash it
     let encryptedPassword = user.password;
     if (password) {
       encryptedPassword = await bcrypt.hash(password, 10);
@@ -126,22 +137,21 @@ const updateUser = async (req: Request, res: Response) => {
         username: username || user.username,
         email: email || user.email,
         password: encryptedPassword,
+        avatarUrl: avatarUrl || user.avatarUrl,
       },
       { new: true }
     );
 
-    // Handle case where update fails
     if (!updatedUser) {
-      res.status(500).json({ message: "Failed to update user" });
-      return;
-    } else {
-      // Respond with the updated user data
-      res.status(200).json(updatedUser);
-      return;
+      return res.status(500).json({ message: "Failed to update user" });
     }
+    
+    return res.status(200).json(updatedUser);
   } catch (error: any) {
-    res.status(500).json({ message: "Error updating user", error: error.message });
-    return;
+    return res.status(500).json({ 
+      message: "Error updating user", 
+      error: error.message 
+    });
   }
 };
 
@@ -173,4 +183,68 @@ const deleteUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error deleting user", error: error.message });
   }
 };
-export default { addUser, getUsers, getUserById, updateUser, deleteUser, createUserHelper };
+
+// Add this function to handle avatar uploads
+const uploadAvatar = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  
+  try {
+    // Check if user exists
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // Check if this is the current user
+    if (req.params.userId !== id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    
+    // Handle file upload
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    // If a previous avatar exists, delete it
+    if (user.avatarUrl) {
+      try {
+        const previousPath = path.join(__dirname, '../../../Backend/uploads/users', path.basename(user.avatarUrl));
+        if (fs.existsSync(previousPath)) {
+          fs.unlinkSync(previousPath);
+        }
+      } catch (error) {
+        console.error('Error deleting previous avatar:', error);
+        // Continue with the upload even if delete fails
+      }
+    }
+    
+    // Set the new avatar URL - this should match Nginx configuration
+    const avatarUrl = `/api/uploads/users/${req.file.filename}`;
+    
+    // Update user with new avatar URL
+    const updatedUser = await userModel.findByIdAndUpdate(
+      id,
+      { avatarUrl },
+      { new: true }
+    );
+    
+    if (!updatedUser) {
+      return res.status(500).json({ message: "Failed to update user avatar" });
+    }
+
+    // Return the full user object with the new avatar URL
+    // Note: With Nginx, we don't need to include protocol and host as it will be handled by the reverse proxy
+    return res.status(200).json({
+      ...updatedUser.toObject(),
+      avatarUrl
+    });
+  } catch (error: any) {
+    console.error('Error in uploadAvatar:', error);
+    return res.status(500).json({ 
+      message: "Error uploading avatar", 
+      error: error.message 
+    });
+  }
+};
+
+export default { addUser, getUsers, getUserById, updateUser, deleteUser, createUserHelper, uploadAvatar };

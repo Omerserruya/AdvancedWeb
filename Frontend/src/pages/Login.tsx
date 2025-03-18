@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -41,6 +41,33 @@ const Login = () => {
     message: '',
     severity: 'error' as 'error' | 'success',
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    
+    if (error) {
+      let errorMessage = 'Authentication failed. Please try again.';
+      
+      // Map error types to specific messages
+      if (error === 'email_exists') {
+        errorMessage = 'This email is already registered. Please use a different account or log in with your password.';
+      } else if (error === 'auth_failed') {
+        errorMessage = 'Authentication failed. Please try again.';
+      } else if (error === 'unauthorized') {
+        errorMessage = 'You are not authorized to access this resource.';
+      }
+      
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error',
+      });
+      
+      // Clear the URL parameter without refreshing the page
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors: Partial<LoginFormData> = {};
@@ -259,8 +286,28 @@ const Login = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ 
+          width: '100%',
+          maxWidth: '400px',
+          top: '50% !important',
+          transform: 'translateY(-50%) !important',
+          left: '0 !important',
+          right: '0 !important',
+          margin: '0 auto',
+          '& .MuiAlert-root': {
+            width: '100%',
+            justifyContent: 'center'
+          }
+        }}
       >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+        <Alert 
+          severity={snackbar.severity} 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </Container>
   );
