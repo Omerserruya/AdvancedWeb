@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -42,6 +42,7 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const [generatingContent, setGeneratingContent] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -75,7 +76,17 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const removeImage = () => {
     setImage(null);
     setImagePreview(null);
+    // Force a re-render of the file input by updating the key
+    setFileInputKey(Date.now());
   };
+  
+  // This useEffect will be triggered when the dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      // Reset the file input key when dialog opens
+      setFileInputKey(Date.now());
+    }
+  }, [open]);
 
   const generateWithAI = async (type: 'title' | 'content') => {
     try {
@@ -144,14 +155,8 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     if (image) {
       formData.append('image', image);
     }
-    
-    console.log('Submitting post form data:');
-    console.log('- Title:', title);
-    console.log('- Content:', content.substring(0, 30) + '...');
-    console.log('- Image:', image ? image.name : 'none');
 
     try {
-      console.log('Sending post creation request...');
       // Using api utility (axios) instead of fetch for better cookie handling
       const response = await api.post('/api/posts', formData, {
         headers: {
@@ -159,12 +164,11 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
         }
       });
       
-      console.log('Post creation successful:', response.data);
-      
       setTitle('');
       setContent('');
       setImage(null);
       setImagePreview(null);
+      setFileInputKey(Date.now()); // Reset file input
       onPostCreated();
       onClose();
     } catch (error) {
@@ -181,6 +185,7 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     setImage(null);
     setImagePreview(null);
     setError(null);
+    setFileInputKey(Date.now()); // Reset file input
     onClose();
   };
 
@@ -346,17 +351,16 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
-                  id="image-upload"
+                  id={`image-upload-${fileInputKey}`}
+                  key={fileInputKey}
                   type="file"
                   onChange={handleImageChange}
-                  disabled={!!imagePreview}
                 />
-                <label htmlFor="image-upload">
+                <label htmlFor={`image-upload-${fileInputKey}`}>
                   <Button
                     variant="outlined"
                     component="span"
                     startIcon={<CloudUploadIcon />}
-                    disabled={!!imagePreview}
                   >
                     Upload Image
                   </Button>

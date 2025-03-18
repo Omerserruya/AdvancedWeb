@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import OAuthCallback from './components/OAuthCallback';
 import ScrollToTop from './components/ScrollToTop';
+import LikedPosts from './pages/LikedPosts';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/liked-posts" element={<LikedPosts />} />
           </Route>
         </Routes>
       </UserProvider>

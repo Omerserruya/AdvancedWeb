@@ -254,8 +254,6 @@ function Profile() {
   };
 
   const handleUpdatePost = (updatedPost: any) => {
-    console.log('Handling updated post in Profile:', updatedPost);
-    
     // Update the local posts state with the server response
     setPosts(currentPosts => 
       currentPosts.map(post => 
@@ -385,6 +383,10 @@ function Profile() {
                     isOwner={user?._id === (typeof post.userID === 'string' ? post.userID : post.userID._id)}
                     onDelete={() => handleDeletePost(post._id)}
                     onEdit={(updatedPost) => handleUpdatePost(updatedPost as PostType)}
+                    onLikeChange={(postId, isLiked) => {
+                      // In My Posts page, we don't need to remove posts when unliked
+                      // as this page shows posts created by the user, not liked by the user
+                    }}
                   />
                 </Grid>
               ))
