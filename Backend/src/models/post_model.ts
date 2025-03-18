@@ -13,11 +13,10 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  images: [{
-    filename: String,
-    path: String,
-    originalname: String
-  }],
+  image: {
+    url: String,
+    filename: String
+  },
   createdAt: {
     type: Date,
     default: Date.now

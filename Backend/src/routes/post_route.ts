@@ -3,7 +3,7 @@ const postsRoute = express.Router();
 import postsController from "../controllers/post_controller";
 import { authentification } from "../controllers/auth_controller";
 import Comment from "../controllers/comment_controller";
-import upload from '../middleware/multer'; // Import the multer middleware
+import postUpload from '../middleware/multer'; // Import the updated multer middleware
 
 /**
  * @swagger
@@ -61,9 +61,17 @@ import upload from '../middleware/multer'; // Import the multer middleware
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Post'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Post created successfully
@@ -72,7 +80,7 @@ import upload from '../middleware/multer'; // Import the multer middleware
  *       401:
  *         description: Unauthorized
  */
-postsRoute.post('/', upload.array('images'), authentification, postsController.addPost);
+postsRoute.post('/', authentification, postUpload.single('image'), postsController.addPost);
 
 /** 
  * @swagger
@@ -133,9 +141,17 @@ postsRoute.get('/:id', postsController.getPostById);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Post'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Post updated successfully
@@ -148,7 +164,7 @@ postsRoute.get('/:id', postsController.getPostById);
  *       404:
  *         description: Post not found
  */
-postsRoute.put('/:id', authentification, postsController.updatePost);
+postsRoute.put('/:id', authentification, postUpload.single('image'), postsController.updatePost);
 
 /** 
  * @swagger
@@ -174,6 +190,72 @@ postsRoute.put('/:id', authentification, postsController.updatePost);
  *         description: Post not found
  */
 postsRoute.delete('/:id', authentification, postsController.deletePost);
+
+/**
+ * @swagger
+ * /posts/{id}/image:
+ *   post:
+ *     summary: Update a post's image
+ *     tags: [Posts]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Image updated successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Post not found
+ */
+postsRoute.post('/:id/image', authentification, postUpload.single('image'), postsController.updatePostImage);
+
+/**
+ * @swagger
+ * /posts/{id}/image:
+ *   delete:
+ *     summary: Remove a post's image
+ *     tags: [Posts]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: Image removed successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Post or image not found
+ */
+postsRoute.delete('/:id/image', authentification, postsController.removePostImage);
 
 /**
  * @swagger
