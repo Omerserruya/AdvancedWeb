@@ -8,11 +8,13 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OAuthCallback from './components/OAuthCallback';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <ThemeProvider>
       <UserProvider>
+        <ScrollToTop />
         <Routes>
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
