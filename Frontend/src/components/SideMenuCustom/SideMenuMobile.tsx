@@ -13,26 +13,7 @@ interface SideMenuMobileProps {
   open: boolean;
   toggleDrawer: (open: boolean) => () => void;
 }
-const { setUser } = useUser();
 
-const handleLogout = async () => {
-  try {
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include', // Include cookies in the request
-    });
-
-    if (response.ok) {
-      setUser(null); // Clear user context
-      // Optionally, redirect to login or home
-      window.location.href = '/'; // Redirect to login page
-    } else {
-      console.error('Logout failed:', await response.json());
-    }
-  } catch (error) {
-    console.error('Error during logout:', error);
-  }
-};
 
 function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
   const { setUser } = useUser();
