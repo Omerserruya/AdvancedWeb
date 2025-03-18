@@ -75,8 +75,25 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 else user.tokens.push(refreshToken);
                 await user.save();
 
-                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod',sameSite:'none' });
-                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' ,sameSite:'none'});
+                // Update cookie settings for better compatibility with nginx
+                res.cookie('accessToken', token, { 
+                    httpOnly: true, 
+                    secure: process.env.NODE_ENV === 'prod',
+                    sameSite: 'lax',  // Changed from 'none' to 'lax' for better browser compatibility
+                    path: '/',        // Explicitly set the path
+                });
+                
+                res.cookie('refreshToken', refreshToken, { 
+                    httpOnly: true, 
+                    secure: process.env.NODE_ENV === 'prod',
+                    sameSite: 'lax',  // Changed from 'none' to 'lax'
+                    path: '/',        // Explicitly set the path
+                });
+                
+                console.log('Login successful, cookies set:', {
+                    accessToken: token.substring(0, 10) + '...',
+                    refreshToken: refreshToken.substring(0, 10) + '...'
+                });
                 
                 // Return user data with the response
                 res.status(200).json({
@@ -102,14 +119,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     try {
-      // Check if the email exists but with different authentication method
-      const existingUser = await userModel.findOne({ 
-        email: user.email, 
-        // Check if this is a different user (has different ID)
-        _id: { $ne: user._id } 
-      });
 
-      if (existingUser) {
+      if (!user) {
         // Email exists but belongs to a different user
         return res.redirect(`/auth/callback?error=email_exists`);
       }
@@ -121,8 +132,8 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       user.tokens = [refreshToken];
       await user.save();
       
-      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'lax' });
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'lax' });
       
       // Redirect to home page using relative path
       res.redirect(`/auth/callback?userId=${user._id}&username=${encodeURIComponent(user.username)}&email=${user.email}&role=${user.role}&createdAt=${user.createdAt}`);
@@ -185,7 +196,12 @@ type Payload = {
 
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
+    console.log('Authentication middleware called');
+    console.log('All cookies:', req.cookies);
+    console.log('Headers:', req.headers);
     const token = req.cookies.accessToken as string ; 
+    console.log('Access token from cookies:', token);
+    
     if (!token) {
         res.status(401).json({ message: 'Auth failed: No credantials were given' });
         return;
@@ -193,14 +209,17 @@ export const authentification =  async (req: Request, res: Response, next: NextF
     try {
         jwt.verify(token, process.env.JWT_KEY as string, (err, payload) => {
             if (err) {
+                console.log('Token verification failed:', err);
                 res.status(401).json({ message: 'Auth failed' });
                 return;
                 
             }
+            console.log('Token verified successfully, payload:', payload);
             req.params.userId = (payload as Payload).userId;
             next();
         });
     } catch (error) {
+        console.log('Authentication error:', error);
         res.status(401).json({ message: 'Auth failed' });
         return;
     }
@@ -208,6 +227,9 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
+    console.log('Refresh token endpoint called');
+    console.log('All cookies:', req.cookies);
+    
     const refreshToken = req.cookies.refreshToken as string;
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
@@ -231,11 +253,27 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
                 const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as Secret, process.env.JWT_REFRESH_EXPIRES_IN as string);
                 user.tokens[user.tokens.indexOf(refreshToken as string)] = newRefreshToken;
                 await user.save();
-                res.cookie('accessToken', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
-                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
+                
+                // Update cookie settings for better compatibility with nginx
+                res.cookie('accessToken', newToken, { 
+                    httpOnly: true, 
+                    secure: process.env.NODE_ENV === 'prod',
+                    sameSite: 'lax',  // Changed from 'none' to 'lax'
+                    path: '/',        // Explicitly set the path
+                });
+                
+                res.cookie('refreshToken', newRefreshToken, { 
+                    httpOnly: true, 
+                    secure: process.env.NODE_ENV === 'prod',
+                    sameSite: 'lax',  // Changed from 'none' to 'lax'
+                    path: '/',        // Explicitly set the path
+                });
+                
+                console.log('Token refreshed successfully');
                 return res.status(200).json({ message: 'Auth successful'});
             }
         } catch (error) {
+            console.error('Error during token refresh:', error);
             res.status(500).json({ error: error });
         }
     })

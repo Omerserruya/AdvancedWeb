@@ -1,13 +1,12 @@
 import PropTypes from 'prop-types';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Drawer, { drawerClasses } from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useUser } from '../../contexts/UserContext';
 import MenuContent from './MenuContent';
+import UserAvatar from '../UserAvatar';
 
 interface SideMenuMobileProps {
   open: boolean;
@@ -61,17 +60,8 @@ const handleLogout = async () => {
             direction="row"
             sx={{ gap: 1, alignItems: 'center', flexGrow: 1, p: 1 }}
           >
-            <Avatar
-              sizes="small"
-              alt="Riley Carter"
-              src="/static/images/avatar/7.jpg"
-              sx={{ width: 24, height: 24 }}
-            />
-            <Typography component="p" variant="h6">
-              Riley Carter
-            </Typography>
+            <UserAvatar />
           </Stack>
-
         </Stack>
         <Divider />
         <Stack sx={{ flexGrow: 1 }}>

@@ -14,6 +14,6 @@ RUN npm install
 # Copy source code but exclude node_modules
 COPY . .
 
-EXPOSE 5000
+EXPOSE 4000
 
 CMD ["npm", "run", "devstart"] 

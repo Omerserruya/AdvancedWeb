@@ -15,7 +15,6 @@ export default function MenuContent() {
 
   const menuItems = [
     { text: 'Home', icon: <HomeIcon />, path: '/home' },
-    { text: 'My Posts', icon: <ArticleIcon />, path: '/my-posts' },
     { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
   ];
 

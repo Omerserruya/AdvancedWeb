@@ -17,7 +17,8 @@ export default function Header() {
         backgroundColor: 'background.paper',
         borderBottom: '1px solid',
         borderColor: 'divider',
-        py: 1
+        px: 3,
+        py: 0.75
       }}
     >
       <Stack
@@ -30,7 +31,7 @@ export default function Header() {
         spacing={2}
       >
         <NavbarBreadcrumbs />
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1.5}>
           <Search />
           <MenuButton showBadge aria-label="Open notifications">
             <NotificationsRoundedIcon />

@@ -7,6 +7,7 @@ export interface User {
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  avatarUrl?: string;
 }
 
 interface UserContextType {

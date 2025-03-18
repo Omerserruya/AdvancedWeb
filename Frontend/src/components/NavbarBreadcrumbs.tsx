@@ -6,10 +6,10 @@ import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { useLocation } from 'react-router-dom';
 
 const StyledBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
-  margin: theme.spacing(1, 0),
+  margin: theme.spacing(0),
   [`& .${breadcrumbsClasses.separator}`]: {
     color: theme.palette.action.disabled,
-    margin: 1,
+    margin: theme.spacing(0, 1),
   },
   [`& .${breadcrumbsClasses.ol}`]: {
     alignItems: 'center',
@@ -33,7 +33,9 @@ export default function NavbarBreadcrumbs() {
       aria-label="breadcrumb"
       separator={<NavigateNextRoundedIcon fontSize="small" />}
     >
-      <Typography variant="body1">Dashboard</Typography>
+      <Typography variant="body1" color="text.secondary">
+        Dashboard
+      </Typography>
       <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600 }}>
         {getPageTitle(location.pathname) || 'Home'}
       </Typography>

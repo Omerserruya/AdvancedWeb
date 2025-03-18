@@ -3,17 +3,14 @@ import { Typography, Box, Grid, Button, CircularProgress } from '@mui/material';
 import { Post } from '../components/Post';
 import { useUser } from '../contexts/UserContext';
 import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import CreatePostDialog from '../components/CreatePostDialog';
 
 interface PostType {
   _id: string;
   title: string;
   content: string;
-  userID: {
-    _id: string;
-    username: string;
-  };
+  userID: string;
   createdAt: string;
   comments?: Array<{
     _id: string;
@@ -27,10 +24,10 @@ interface PostType {
 
 const Home = () => {
   const { user } = useUser();
-  const navigate = useNavigate();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -50,6 +47,32 @@ const Home = () => {
       console.error('Error fetching posts:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await api.delete(`/api/posts/${postId}`);
+      // Refresh posts after deletion
+      fetchPosts();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const handleUpdatePost = async (updatedPost: PostType) => {
+    try {
+      await api.put(`/api/posts/${updatedPost._id}`, updatedPost);
+      // Update the posts state immediately
+      setPosts(currentPosts => 
+        currentPosts.map(post => 
+          post._id === updatedPost._id ? updatedPost : post
+        )
+      );
+    } catch (error) {
+      console.error('Error updating post:', error);
+      // If there's an error, refresh all posts
+      fetchPosts();
     }
   };
 
@@ -73,7 +96,9 @@ const Home = () => {
           color: 'white', 
           p: 3, 
           borderRadius: 2,
-          boxShadow: 2
+          boxShadow: 2,
+          maxWidth: 800,
+          width: '100%'
         }}
       >
         <Typography variant="h5" gutterBottom>
@@ -92,7 +117,7 @@ const Home = () => {
             }
           }}
           startIcon={<AddIcon />}
-          onClick={() => navigate('/add-post')}
+          onClick={() => setIsCreateDialogOpen(true)}
         >
           Create Post
         </Button>
@@ -120,12 +145,23 @@ const Home = () => {
           <Grid container spacing={3}>
             {posts.map((post) => (
               <Grid item xs={12} key={post._id}>
-                <Post post={post} />
+                <Post 
+                  post={post} 
+                  isOwner={user?._id === post.userID.toString()}
+                  onDelete={() => handleDeletePost(post._id)}
+                  onEdit={(updatedPost) => handleUpdatePost(updatedPost as PostType)}
+                />
               </Grid>
             ))}
           </Grid>
         )}
       </Box>
+
+      <CreatePostDialog
+        open={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onPostCreated={fetchPosts}
+      />
     </Box>
   );
 };
