@@ -90,10 +90,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                     path: '/',        // Explicitly set the path
                 });
                 
-                console.log('Login successful, cookies set:', {
-                    accessToken: token.substring(0, 10) + '...',
-                    refreshToken: refreshToken.substring(0, 10) + '...'
-                });
+                
                 
                 // Return user data with the response
                 res.status(200).json({
@@ -196,11 +193,8 @@ type Payload = {
 
 // Authentification middleware - check if token is valid
 export const authentification =  async (req: Request, res: Response, next: NextFunction) => {
-    console.log('Authentication middleware called');
-    console.log('All cookies:', req.cookies);
-    console.log('Headers:', req.headers);
+   
     const token = req.cookies.accessToken as string ; 
-    console.log('Access token from cookies:', token);
     
     if (!token) {
         res.status(401).json({ message: 'Auth failed: No credantials were given' });
@@ -209,17 +203,14 @@ export const authentification =  async (req: Request, res: Response, next: NextF
     try {
         jwt.verify(token, process.env.JWT_KEY as string, (err, payload) => {
             if (err) {
-                console.log('Token verification failed:', err);
                 res.status(401).json({ message: 'Auth failed' });
                 return;
                 
             }
-            console.log('Token verified successfully, payload:', payload);
             req.params.userId = (payload as Payload).userId;
             next();
         });
     } catch (error) {
-        console.log('Authentication error:', error);
         res.status(401).json({ message: 'Auth failed' });
         return;
     }
@@ -227,9 +218,7 @@ export const authentification =  async (req: Request, res: Response, next: NextF
 
 // Refresh token - return a new token
 const refreshToken = async (req: Request, res: Response, next: any) => {
-    console.log('Refresh token endpoint called');
-    console.log('All cookies:', req.cookies);
-    
+ 
     const refreshToken = req.cookies.refreshToken as string;
     if (!refreshToken) {
          res.status(401).json({ message: 'Auth failed: No refresh token provided' });
@@ -269,11 +258,9 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
                     path: '/',        // Explicitly set the path
                 });
                 
-                console.log('Token refreshed successfully');
                 return res.status(200).json({ message: 'Auth successful'});
             }
         } catch (error) {
-            console.error('Error during token refresh:', error);
             res.status(500).json({ error: error });
         }
     })

@@ -50,7 +50,7 @@ const addUser = async (req: Request, res: Response) => {
     if (role === "admin") {
       const authenticatedUser = await userModel.findById(req.params.userId);
       if (!authenticatedUser || authenticatedUser.role !== "admin") {
-        return res.status(403).json({ message: "Access denied: Only admins can create admin users" });
+        return res.status(403).json({ message: "Access denied" });
       }
     }
 

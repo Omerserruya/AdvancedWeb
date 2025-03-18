@@ -233,7 +233,7 @@ describe("Users Tests", () => {
   test("Test Update User fail - no fields to update", async () => {
     const response = await request(app).put("/users/" + testUser._id).set('Cookie',[`accessToken=${testUser.accessToken};refreshToken=${testUser.refreshToken}`]).send({});
     expect(response.statusCode).toBe(400); // No fields to update
-    expect(response.body.message).toBe("At least one field (e.g., username, email) is required to update");
+    expect(response.body.message).toBe("At least one field is required to update");
   });
 
   test("Test Delete User", async () => {

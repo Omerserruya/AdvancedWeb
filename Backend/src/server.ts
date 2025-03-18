@@ -96,7 +96,6 @@ const initApp = () => {
       mongoose
       .connect(process.env.MONGODB_URL,mongoOptions)
       .then(() => {
-        console.log('MongoDB connection successful');
         resolve(app);
       })
       .catch((error) => {
