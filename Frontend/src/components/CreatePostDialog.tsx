@@ -76,8 +76,12 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
-
+    
+    if (!title.trim() || !content.trim()) {
+      setError('Title and content are required');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
@@ -89,11 +93,14 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     });
 
     try {
-      await fetch('/api/posts', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
+      // Using api utility (axios) instead of fetch for better cookie handling
+      const response = await api.post('/api/posts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data', // Important for file uploads
+        }
       });
+      
+      console.log('Post creation response:', response);
       
       setTitle('');
       setContent('');

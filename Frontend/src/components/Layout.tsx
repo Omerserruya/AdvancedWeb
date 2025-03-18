@@ -1,10 +1,27 @@
 import React from 'react';
-import { Box } from "@mui/material";
-import { Outlet } from 'react-router-dom';
+import { Box, CircularProgress } from "@mui/material";
+import { Outlet, Navigate } from 'react-router-dom';
 import SideMenu from './SideMenuCustom/SideMenu';
 import Header from './Header';
+import { useUser } from '../contexts/UserContext';
 
 function Layout() {
+  const { user, loading } = useUser();
+
+  // Show loading state while checking user authentication
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar */}

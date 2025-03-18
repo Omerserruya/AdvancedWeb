@@ -25,7 +25,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"  # For host MongoDB connection
     ports:
-      - "5000:5000"
+      - "4000:4000"
 
   app-nginx:     # Named service for nginx
     image: nginx:alpine

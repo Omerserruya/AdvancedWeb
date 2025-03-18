@@ -5,19 +5,25 @@ import Profile from './pages/Profile';
 import { UserProvider } from './contexts/UserContext';
 import { ThemeProvider } from './theme/ThemeProvider';
 import Layout from './components/Layout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import OAuthCallback from './components/OAuthCallback';
 
 function App() {
   return (
     <ThemeProvider>
       <UserProvider>
         <Routes>
-          {/* Redirect root to home */}
-          <Route path="/" element={<Navigate to="/home" replace />} />
+          {/* Auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
           
           {/* Main routes */}
           <Route element={<Layout />}>
-            <Route path="home" element={<Home />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </UserProvider>
