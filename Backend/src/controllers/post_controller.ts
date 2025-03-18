@@ -74,11 +74,25 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const skip = (page - 1) * limit;
     
-    // Extract filter parameter
+    // Extract filter parameters
     const userIDFilter = req.query.userID;
+    const likedFilter = req.query.liked === 'true';
+    const userId = req.params.userId; // Current user ID from auth middleware
     
     // Build query
-    let query = userIDFilter ? { userID: userIDFilter } : {};
+    let query: any = {};
+    
+    // Filter by user ID if provided
+    if (userIDFilter) {
+      query.userID = userIDFilter;
+    }
+    
+    // Filter for posts liked by the current user
+    if (likedFilter && userId) {
+      // We need to fetch posts where the current user's ID is in the likes array
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      query.likes = userObjectId;
+    }
     
     console.log(`Fetching posts with pagination: limit=${limit}, page=${page}, skip=${skip}`);
     console.log(`Filter: ${JSON.stringify(query)}`);

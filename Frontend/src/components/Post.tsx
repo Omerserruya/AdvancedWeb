@@ -71,9 +71,10 @@ interface PostProps {
   isOwner?: boolean;
   onDelete?: () => void;
   onEdit?: (updatedPost: PostType) => void;
+  onLikeChange?: (postId: string, isLiked: boolean) => void;
 }
 
-export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onEdit }) => {
+export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onEdit, onLikeChange }) => {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likesCount || post.initialLikes || 0);
   const [showComments, setShowComments] = useState(false);
@@ -201,8 +202,14 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     try {
       const response = await api.post(`/api/posts/${post._id}/like`);
       if (response.data) {
-        setLiked(response.data.isLiked);
+        const newLikedState = response.data.isLiked;
+        setLiked(newLikedState);
         setLikes(response.data.likesCount);
+        
+        // If this post was unliked and we have an onLikeChange callback, notify the parent
+        if (!newLikedState && onLikeChange) {
+          onLikeChange(post._id, newLikedState);
+        }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -397,18 +404,13 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
       // Handle image changes
       if (editedImage) {
         formData.append('image', editedImage);
-        console.log('Adding new image to request');
       } else if (removeCurrentImage) {
         // Add a flag to indicate image should be removed
         formData.append('removeImage', 'true');
-        console.log('Setting removeImage flag to true');
       } else {
         // Explicitly indicate we want to keep existing image (helps backend differentiate)
         formData.append('keepExistingImage', 'true');
-        console.log('Keeping existing image');
       }
-      
-      console.log('Submitting post update with removeImage:', removeCurrentImage);
       
       // Make API request
       const response = await api.put(`/api/posts/${post._id}`, formData, {
@@ -419,7 +421,6 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
       
       // Get the updated post data from the response
       const updatedPost = response.data;
-      console.log('Updated post received:', updatedPost);
       
       // Update the local post state with the response from the server
       if (onEdit && updatedPost) {
