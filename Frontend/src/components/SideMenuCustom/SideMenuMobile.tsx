@@ -6,7 +6,7 @@ import Drawer, { drawerClasses } from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-
+import { useUser } from '../../contexts/UserContext';
 import MenuContent from './MenuContent';
 
 interface SideMenuMobileProps {
@@ -14,7 +14,29 @@ interface SideMenuMobileProps {
   toggleDrawer: (open: boolean) => () => void;
 }
 
+
 function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
+  const { setUser } = useUser();
+
+const handleLogout = async () => {
+  try {
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include', // Include cookies in the request
+    });
+
+    if (response.ok) {
+      setUser(null); // Clear user context
+      // Optionally, redirect to login or home
+      window.location.href = '/'; // Redirect to login page
+    } else {
+      console.error('Logout failed:', await response.json());
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
+};
+
   return (
     <Drawer
       anchor="right"
@@ -57,7 +79,7 @@ function SideMenuMobile({ open, toggleDrawer }: SideMenuMobileProps) {
           <Divider />
         </Stack>
         <Stack sx={{ p: 2 }}>
-          <Button variant="outlined" fullWidth startIcon={<LogoutRoundedIcon />}>
+          <Button variant="outlined" onClick={handleLogout} fullWidth startIcon={<LogoutRoundedIcon />}>
             Logout
           </Button>
         </Stack>
