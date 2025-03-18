@@ -276,8 +276,28 @@ const Register = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ 
+          width: '100%',
+          maxWidth: '400px',
+          top: '50% !important',
+          transform: 'translateY(-50%) !important',
+          left: '0 !important',
+          right: '0 !important',
+          margin: '0 auto',
+          '& .MuiAlert-root': {
+            width: '100%',
+            justifyContent: 'center'
+          }
+        }}
       >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+        <Alert 
+          severity={snackbar.severity} 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </Container>
   );

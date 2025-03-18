@@ -19,14 +19,24 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Try to refresh the token
-        await axios.post('/api/auth/refresh-token', {}, { 
+        const refreshResponse = await axios.post('/api/auth/refresh-token', {}, { 
           withCredentials: true // Important for cookies
         });
-        // Retry the original request
-        return api(originalRequest);
+        
+        // Only proceed if refresh was successful
+        if (refreshResponse.status === 200) {
+          // Retry the original request
+          return api(originalRequest);
+        } else {
+          // If refresh doesn't return 200, clear user data and redirect
+          localStorage.removeItem('user_id');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
       } catch (refreshError) {
-        // If refresh fails, redirect to login
-        window.location.href = '/';
+        // If refresh fails, clear user data and redirect
+        localStorage.removeItem('user_id');
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

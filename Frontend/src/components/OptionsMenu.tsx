@@ -29,20 +29,32 @@ export default function OptionsMenu() {
   
   const handleLogout = async () => {
     try {
+      // Use fetch with proper credentials to ensure cookies are sent
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include', // Include cookies in the request
+        credentials: 'include', // Important: Include cookies in the request
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-  
+
+      // Always clear local storage and user context regardless of server response
+      localStorage.removeItem('user_id');
+      setUser(null);
+      
       if (response.ok) {
-        setUser(null); // Clear user context
-        // Optionally, redirect to login or home
-        window.location.href = '/'; // Redirect to login page
+        window.location.href = '/login';
       } else {
         console.error('Logout failed:', await response.json());
+        // Still redirect to login page even if server logout fails
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error('Error during logout:', error);
+      // Still clear user data and redirect on error
+      localStorage.removeItem('user_id');
+      setUser(null);
+      window.location.href = '/login';
     }
   };
   
