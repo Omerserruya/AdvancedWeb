@@ -190,6 +190,44 @@ const upload = multer({
 });
 
 // Add avatar upload route
+/**
+ * @swagger
+ * /users/{id}/avatar:
+ *   post:
+ *     summary: Upload a user avatar
+ *     tags: [Users]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: User avatar image file
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *       400:
+ *         description: Bad request or invalid file type
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 usersRoute.post(
   '/:id/avatar', 
   authentification, 

@@ -144,7 +144,36 @@ authRoute.post('/test', authentification, auth.test);
 authRoute.get('/test', authentification, auth.test);
 
 // GitHub authentication routes
+/**
+ * @swagger
+ * /auth/github:
+ *   get:
+ *     summary: Authenticate with GitHub
+ *     tags: [Auth]
+ *     description: Redirects to GitHub for authentication
+ *     responses:
+ *       302:
+ *         description: Redirects to GitHub OAuth page
+ */
 authRoute.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
+
+/**
+ * @swagger
+ * /auth/github/callback:
+ *   get:
+ *     summary: GitHub authentication callback
+ *     tags: [Auth]
+ *     description: Callback URL for GitHub OAuth authentication
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: OAuth code from GitHub
+ *     responses:
+ *       302:
+ *         description: Redirects to frontend callback URL with user details or error
+ */
 authRoute.get('/github/callback', 
   (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('github', { session: false }, (err: Error | null, user: IUser | false, info: any) => {
@@ -165,7 +194,36 @@ authRoute.get('/github/callback',
 );
 
 // Google authentication routes
+/**
+ * @swagger
+ * /auth/google:
+ *   get:
+ *     summary: Authenticate with Google
+ *     tags: [Auth]
+ *     description: Redirects to Google for authentication
+ *     responses:
+ *       302:
+ *         description: Redirects to Google OAuth page
+ */
 authRoute.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: Google authentication callback
+ *     tags: [Auth]
+ *     description: Callback URL for Google OAuth authentication
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: OAuth code from Google
+ *     responses:
+ *       302:
+ *         description: Redirects to frontend callback URL with user details or error
+ */
 authRoute.get('/google/callback', 
   (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('google', { session: false }, (err: Error | null, user: IUser | false, info: any) => {
