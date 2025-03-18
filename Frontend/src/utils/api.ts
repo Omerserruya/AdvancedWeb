@@ -3,10 +3,23 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'http://localhost',
   withCredentials: true, // This is crucial for sending cookies
-  headers: {
-    'Content-Type': 'application/json',
-  }
 });
+
+// Request interceptor to handle content type
+api.interceptors.request.use(
+  (config) => {
+    // Only set JSON content type if not a multipart/form-data
+    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
+    // If it's FormData, let Axios set the content type with boundary
+    // No need to log this each time
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Response interceptor for handling authentication errors
 api.interceptors.response.use(

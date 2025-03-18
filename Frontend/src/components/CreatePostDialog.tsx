@@ -11,8 +11,6 @@ import {
   Typography,
   Stack,
   Alert,
-  ImageList,
-  ImageListItem,
   CircularProgress,
 } from '@mui/material';
 import { Close as CloseIcon, CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -27,51 +25,43 @@ interface CreatePostDialogProps {
 const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages: File[] = [];
-      const newPreviews: string[] = [];
+    if (files && files.length > 0) {
+      const file = files[0]; // Only take the first file
       
-      const filesArray = Array.from(files);
+      if (file.size > 5000000) { // 5MB limit
+        setError('Image should be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setError('Only image files are allowed');
+        return;
+      }
       
-      filesArray.forEach((file: File) => {
-        if (file.size > 5000000) { // 5MB limit
-          setError('Each image should be less than 5MB');
-          return;
+      setImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setImagePreview(reader.result as string);
         }
-        if (!file.type.startsWith('image/')) {
-          setError('Only image files are allowed');
-          return;
-        }
-        
-        newImages.push(file);
-        
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (reader.result) {
-            newPreviews.push(reader.result as string);
-            if (newPreviews.length === filesArray.length) {
-              setImagePreviews([...imagePreviews, ...newPreviews]);
-            }
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-
-      setImages([...images, ...newImages]);
+      };
+      reader.readAsDataURL(file);
+      
       setError(null);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -88,11 +78,17 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
-    images.forEach((image) => {
-      formData.append('images', image);
-    });
+    if (image) {
+      formData.append('image', image);
+    }
+    
+    console.log('Submitting post form data:');
+    console.log('- Title:', title);
+    console.log('- Content:', content.substring(0, 30) + '...');
+    console.log('- Image:', image ? image.name : 'none');
 
     try {
+      console.log('Sending post creation request...');
       // Using api utility (axios) instead of fetch for better cookie handling
       const response = await api.post('/api/posts', formData, {
         headers: {
@@ -100,12 +96,12 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
         }
       });
       
-      console.log('Post creation response:', response);
+      console.log('Post creation successful:', response.data);
       
       setTitle('');
       setContent('');
-      setImages([]);
-      setImagePreviews([]);
+      setImage(null);
+      setImagePreview(null);
       onPostCreated();
       onClose();
     } catch (error) {
@@ -119,8 +115,8 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const handleCancel = () => {
     setTitle('');
     setContent('');
-    setImages([]);
-    setImagePreviews([]);
+    setImage(null);
+    setImagePreview(null);
     setError(null);
     onClose();
   };
@@ -190,52 +186,50 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
             />
 
             <Box>
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="image-upload"
-                type="file"
-                multiple
-                onChange={handleImageChange}
-              />
-              <label htmlFor="image-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Upload Images
-                </Button>
-              </label>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="image-upload"
+                  type="file"
+                  onChange={handleImageChange}
+                  disabled={!!imagePreview}
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<CloudUploadIcon />}
+                    disabled={!!imagePreview}
+                  >
+                    Upload Image
+                  </Button>
+                </label>
+              </Stack>
 
-              {imagePreviews.length > 0 && (
-                <ImageList sx={{ width: '100%', maxHeight: 400, mt: 2 }} cols={3} rowHeight={164}>
-                  {imagePreviews.map((preview, index) => (
-                    <ImageListItem key={index} sx={{ position: 'relative' }}>
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        loading="lazy"
-                        style={{ height: '100%', objectFit: 'cover' }}
-                      />
-                      <IconButton
-                        sx={{
-                          position: 'absolute',
-                          top: 5,
-                          right: 5,
-                          bgcolor: 'background.paper',
-                          '&:hover': {
-                            bgcolor: 'background.paper',
-                          },
-                        }}
-                        size="small"
-                        onClick={() => removeImage(index)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </ImageListItem>
-                  ))}
-                </ImageList>
+              {imagePreview && (
+                <Box sx={{ position: 'relative', mt: 2, maxWidth: 300 }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{ width: '100%', height: 'auto', borderRadius: '4px' }}
+                  />
+                  <IconButton
+                    sx={{
+                      position: 'absolute',
+                      top: 5,
+                      right: 5,
+                      bgcolor: 'background.paper',
+                      '&:hover': {
+                        bgcolor: 'background.paper',
+                      },
+                    }}
+                    size="small"
+                    onClick={removeImage}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               )}
             </Box>
           </Stack>
