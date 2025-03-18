@@ -14,6 +14,7 @@ export interface IUser extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   tokens?: [String];
+  likedPosts?: [String]; // Array of post IDs liked by the user
   comparePassword(candidatePassword: string): Promise<boolean>;
   
 }
@@ -51,6 +52,11 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
   googleId: {
     type: String,
+    required: false
+  },
+  likedPosts: {
+    type: [String],
+    default: [],
     required: false
   },
   createdAt: {
