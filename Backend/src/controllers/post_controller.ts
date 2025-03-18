@@ -27,6 +27,7 @@ const addPost = async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json(post);
   } catch (error) {
+    console.error('Error creating post:', error);
     res.status(500).json({
       message: "Error creating post",
       error: (error as any).message

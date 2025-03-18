@@ -12,7 +12,6 @@ const Drawer = styled(MuiDrawer)({
   width: drawerWidth,
   flexShrink: 0,
   boxSizing: 'border-box',
-  mt: 10,
   [`& .${drawerClasses.paper}`]: {
     width: drawerWidth,
     boxSizing: 'border-box',
@@ -21,29 +20,23 @@ const Drawer = styled(MuiDrawer)({
 
 export default function SideMenu() {
   return (
-    <>
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', md: 'block' },
-          [`& .${drawerClasses.paper}`]: {
-            backgroundColor: 'background.paper',
-          },
-          "& .MuiDrawer-paper": { borderWidth: 0 }
-        }}
-      >
+    <Drawer
+      variant="permanent"
+      sx={{
+        display: { xs: 'none', md: 'block' },
+        '& .MuiDrawer-paper': {
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          width: drawerWidth
+        }
+      }}
+    >
+      <Box sx={{ mt: '64px' }}>
+        <UserCard />
         <Divider />
-        <Box
-          sx={{
-            display: 'flex',
-            mt: 'calc(var(--template-frame-height, 0px) + 4px)',
-            p: 1.5,
-          }}
-        >
-          <UserCard />
-        </Box>
         <MenuContent />
-      </Drawer>
-    </>
+      </Box>
+    </Drawer>
   );
 }

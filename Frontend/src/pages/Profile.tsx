@@ -1,32 +1,76 @@
-import React from 'react';
-import { Container, Box, Typography } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, Typography, Avatar, Stack, CircularProgress, Paper } from '@mui/material';
+import { useUser } from '../contexts/UserContext';
 
-const Profile: React.FC = () => {
+function Profile() {
+  const { user, refreshUserDetails } = useUser();
+
+  useEffect(() => {
+    refreshUserDetails();
+  }, []);
+
+  const getInitials = (name: string | undefined) => {
+    if (!name) return 'G';
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  if (!user) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ textAlign: 'center', mb: 6, mt: 2 }}>
-        <Typography 
-          variant="h2" 
-          component="h1" 
-          sx={{ 
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 2
-          }}
-        >
-          Profile
-        </Typography>
-      </Box>
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h6">User Information</Typography>
-        <Typography variant="body1">Name: John Doe</Typography>
-        <Typography variant="body1">Email: johndoe@example.com</Typography>
-        {/* Add more user information as needed */}
-      </Box>
-    </Container>
+    <Box sx={{ padding: 2 }}>
+      <Typography variant="h4" gutterBottom>
+        Profile Details
+      </Typography>
+
+      <Paper elevation={3} sx={{ padding: 3, maxWidth: '600px', margin: '0 auto' }}>
+        <Stack spacing={3}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar sx={{ width: 56, height: 56 }}>
+              {getInitials(user.username)}
+            </Avatar>
+            <Typography variant="h5">{user.username}</Typography>
+          </Stack>
+
+          <Box>
+            <Typography variant="subtitle1" color="text.secondary">
+              Email
+            </Typography>
+            <Typography variant="h6" gutterBottom>
+              {user.email}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle1" color="text.secondary">
+              Role
+            </Typography>
+            <Typography variant="h6" gutterBottom>
+              {user.role || 'User'}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle1" color="text.secondary">
+              Member Since
+            </Typography>
+            <Typography variant="h6">
+              {new Date(user.createdAt || '').toLocaleDateString()}
+            </Typography>
+          </Box>
+        </Stack>
+      </Paper>
+    </Box>
   );
-};
+}
 
 export default Profile; 

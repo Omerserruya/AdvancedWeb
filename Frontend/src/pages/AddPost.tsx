@@ -10,7 +10,8 @@ import {
   IconButton,
   Alert,
   ImageList,
-  ImageListItem
+  ImageListItem,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -21,7 +22,8 @@ const AddPost: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
-  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const navigate = useNavigate();
 
@@ -65,39 +67,38 @@ const AddPost: React.FC = () => {
     setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim().length < 3) {
-      setError('Title must be at least 3 characters long');
-      return;
-    }
-    if (content.trim().length < 10) {
-      setError('Content must be at least 10 characters long');
-      return;
-    }
+  const handleAddPost = async () => {
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    images.forEach((image) => {
+      formData.append('images', image); // Append each image file
+    });
 
     try {
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('content', content);
-      
-      images.forEach((image, index) => {
-        formData.append('images', image);
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Ensure cookies are sent for authentication
       });
 
-      await axios.post('/api/posts', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      navigate('/');
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.message || 'Failed to create post. Please try again.');
-      } else {
-        setError('Failed to create post. Please try again.');
+      if (!response.ok) {
+        throw new Error('Failed to add post');
       }
+
+      const newPost = await response.json();
+      console.log('Post created successfully:', newPost);
+      
+      // Redirect to My Posts page after successful post creation
+      navigate('/my-posts');
+    } catch (error) {
+      console.error('Error adding post:', error);
+      setError('Failed to add post. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,7 +115,7 @@ const AddPost: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => { e.preventDefault(); handleAddPost(); }}>
           <Stack spacing={3}>
             <TextField
               label="Title"
@@ -205,13 +206,17 @@ const AddPost: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button
-                variant="contained"
-                type="submit"
-                disabled={!title.trim() || !content.trim()}
-              >
-                Create Post
-              </Button>
+              {loading ? (
+                <CircularProgress />
+              ) : (
+                <Button
+                  variant="contained"
+                  type="submit"
+                  disabled={!title.trim() || !content.trim()}
+                >
+                  Create Post
+                </Button>
+              )}
             </Box>
           </Stack>
         </form>

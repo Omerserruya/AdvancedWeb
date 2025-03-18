@@ -20,6 +20,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { StyledBackground, StyledCard, SocialButton } from '../styles/AuthStyles';
 import { useUser } from '../contexts/UserContext';
+import { User } from '../contexts/UserContext';
 
 interface LoginFormData {
   email: string;
@@ -28,7 +29,7 @@ interface LoginFormData {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { setUser, refreshUserDetails } = useUser();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -66,35 +67,44 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser({
+          _id: data.user._id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role,
+          createdAt: data.user.createdAt,
+          updatedAt: data.user.updatedAt
+        });
+        
+        // Fetch complete user details
+        await refreshUserDetails();
+        setSnackbar({
+          open: true,
+          message: 'Login successful!',
+          severity: 'success',
+        });
+        setTimeout(() => {
+          navigate('/home');
+        }, 1500);
+      } else {
+        setSnackbar({
+          open: true,
+          message: data.message || 'Login failed',
+          severity: 'error',
+        });
       }
-
-      const userData = await response.json();
-      setUser({
-        _id: userData._id,
-        username: userData.username,
-        email: userData.email,
-      });
-
-      setSnackbar({
-        open: true,
-        message: 'Login successful!',
-        severity: 'success',
-      });
-      
-      setTimeout(() => {
-        navigate('/home');
-      }, 1500);
-      
     } catch (error) {
+      console.error('Login error:', error);
       setSnackbar({
         open: true,
-        message: 'Login failed. Please try again.',
+        message: 'An error occurred during login',
         severity: 'error',
       });
     } finally {

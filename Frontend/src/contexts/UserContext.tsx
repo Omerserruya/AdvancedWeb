@@ -1,41 +1,54 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface User {
+export interface User {
   _id: string;
   username: string;
   email: string;
-  // Add any other user properties you need
+  role?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
-  logout: () => void;
+  refreshUserDetails: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    // Initialize user from localStorage if available
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const refreshUserDetails = async () => {
+    if (user?._id) {
+      try {
+        const response = await fetch(`/api/users/${user._id}`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user details');
+        }
+
+        const userData = await response.json();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error refreshing user details:', error);
+      }
+    }
   };
 
-  // Update localStorage when user changes
+  // Fetch user details when the component mounts
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-  }, [user]);
+    refreshUserDetails();
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider value={{ user, setUser, refreshUserDetails }}>
       {children}
     </UserContext.Provider>
   );
@@ -43,7 +56,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;

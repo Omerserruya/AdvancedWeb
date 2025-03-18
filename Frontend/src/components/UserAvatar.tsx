@@ -1,32 +1,27 @@
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { Stack } from '@mui/material';
+import React from 'react';
+import { Avatar, Stack, Typography, Box } from '@mui/material';
+import { useUser } from '../contexts/UserContext';
 
-export default  function UserAvatar() {
+export default function UserAvatar() {
+    const { user } = useUser();
+
+    // Get initials from username
+    const getInitials = (name: string | undefined) => {
+        if (!name) return 'G';
+        
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
+    };
+
     return (
-        <Stack
-        direction="row"
-        sx={{
-          p: 0,
-          gap: 1,
-          alignItems: 'center',
-        }}
-      >
-        <Avatar
-        sizes="small"
-        alt="ziley Carter"
-        src="/static/images/avatar/7.jpg"
-        sx={{ width: 36, height: 36 }}
-    />
-    <Box sx={{ mr: 'auto' }}>
-        <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: '16px' }}>
-        Riley Carter
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        riley@email.com
-        </Typography>
-    </Box>
-    </Stack>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
+            <Avatar>{getInitials(user?.username)}</Avatar>
+            <Box>
+                <Typography variant="subtitle2">{user?.username || 'Guest'}</Typography>
+            </Box>
+        </Stack>
     );
 }
