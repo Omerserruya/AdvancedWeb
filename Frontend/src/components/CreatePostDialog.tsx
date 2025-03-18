@@ -12,9 +12,15 @@ import {
   Stack,
   Alert,
   CircularProgress,
+  InputAdornment,
   Paper,
 } from '@mui/material';
-import { Close as CloseIcon, CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { 
+  Close as CloseIcon, 
+  CloudUpload as CloudUploadIcon, 
+  Delete as DeleteIcon,
+  AutoAwesome as AutoAwesomeIcon 
+} from '@mui/icons-material';
 import api from '../utils/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -31,6 +37,9 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [generatingTitle, setGeneratingTitle] = useState(false);
+  const [generatingContent, setGeneratingContent] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -66,6 +75,56 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const removeImage = () => {
     setImage(null);
     setImagePreview(null);
+  };
+
+  const generateWithAI = async (type: 'title' | 'content') => {
+    try {
+      // For title generation, always use content regardless of which button was clicked
+      // For content generation, use the content field
+      let textToUse = '';
+      
+      if (type === 'title') {
+        // Always use content for title generation
+        textToUse = content.trim();
+        if (!textToUse) {
+          setError('Please enter some text in the content field to generate a title');
+          return;
+        }
+      } else {
+        // For content generation, use content field
+        textToUse = content.trim();
+      }
+      
+      if (type === 'title') {
+        setGeneratingTitle(true);
+      } else {
+        setGeneratingContent(true);
+      }
+      
+      const response = await api.post('/api/ai/generate', {
+        "type": type,
+        "text": textToUse || 'rand'
+      });
+      
+      if (response.data && response.data.generatedText) {
+        if (type === 'title') {
+          setTitle(response.data.generatedText);
+        } else {
+          setContent(response.data.generatedText);
+        }
+      } else {
+        setError('Failed to generate AI content. Please try again.');
+      }
+    } catch (error) {
+      console.error(`Error generating ${type} with AI:`, error);
+      setError(`Failed to generate ${type} with AI. Please try again.`);
+    } finally {
+      if (type === 'title') {
+        setGeneratingTitle(false);
+      } else {
+        setGeneratingContent(false);
+      }
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -155,21 +214,90 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
               </Alert>
             )}
 
-            <TextField
-              autoFocus
-              label="Title"
-              fullWidth
-              variant="outlined"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              error={title.trim().length > 0 && title.trim().length < 3}
-              helperText={
-                title.trim().length > 0 && title.trim().length < 3
-                  ? 'Title must be at least 3 characters long'
-                  : ''
-              }
-            />
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                autoFocus
+                label="Title"
+                fullWidth
+                variant="outlined"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                error={title.trim().length > 0 && title.trim().length < 3}
+                helperText={
+                  title.trim().length > 0 && title.trim().length < 3
+                    ? 'Title must be at least 3 characters long'
+                    : ''
+                }
+              />
+              <IconButton
+                onClick={() => generateWithAI('title')}
+                disabled={generatingTitle}
+                size="small"
+                color="primary"
+                title="Generate with AI"
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  bgcolor: 'background.paper',
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                  zIndex: 1,
+                }}
+              >
+                {generatingTitle ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <AutoAwesomeIcon />
+                )}
+              </IconButton>
+            </Box>
+
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                label="Content"
+                multiline
+                rows={4}
+                fullWidth
+                variant="outlined"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                required
+                error={content.trim().length > 0 && content.trim().length < 10}
+                helperText={
+                  content.trim().length > 0 && content.trim().length < 10
+                    ? 'Content must be at least 10 characters long'
+                    : ''
+                }
+                placeholder="Share your thoughts..."
+              />
+              <IconButton
+                onClick={() => generateWithAI('content')}
+                disabled={generatingContent}
+                size="small"
+                color="primary"
+                title="Generate with AI"
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  bgcolor: 'background.paper',
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                  zIndex: 1,
+                }}
+              >
+                {generatingContent ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <AutoAwesomeIcon />
+                )}
+              </IconButton>
+            </Box>
+
 
             <Box>
               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
