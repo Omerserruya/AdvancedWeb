@@ -20,8 +20,7 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/auth/google/callback" element={<OAuthCallback />} />
-          <Route path="/auth/github/callback" element={<OAuthCallback />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
           
           {/* Protected routes with Layout */}
           <Route element={<Layout />}>

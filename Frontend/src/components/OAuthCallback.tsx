@@ -1,40 +1,37 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { CircularProgress, Container, Box } from '@mui/material';
 import { User } from '../contexts/UserContext';
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser } = useUser();
 
   useEffect(() => {
     handleOAuthCallback();
   }, []);
 
-  const handleOAuthCallback = async () => {
-    try {
-      const response = await fetch('/api/auth/callback/verify', {
-        credentials: 'include',
-      });
-      const data = await response.json();
+  const handleOAuthCallback = () => {
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('userId');
+    const username = params.get('username');
+    const email = params.get('email');
+    const role = params.get('role');
+    const createdAt = params.get('createdAt');
 
-      if (data.user) {
-        const userData: User = {
-          _id: data.user._id,
-          username: data.user.username,
-          email: data.user.email,
-          role: data.user.role,
-          createdAt: data.user.createdAt,
-          updatedAt: data.user.updatedAt
-        };
-        setUser(userData);
-        navigate('/home');
-      } else {
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('OAuth callback error:', error);
+    if (userId && username && email) {
+      const userData: User = {
+        _id: userId,
+        username,
+        email,
+        role: role || '',
+        createdAt: createdAt ? new Date(createdAt) : undefined
+      };
+      setUser(userData);
+      navigate('/home');
+    } else {
       navigate('/');
     }
   };
@@ -55,4 +52,4 @@ const OAuthCallback = () => {
   );
 };
 
-export default OAuthCallback; 
+export default OAuthCallback;

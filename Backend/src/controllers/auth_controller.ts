@@ -75,8 +75,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 else user.tokens.push(refreshToken);
                 await user.save();
 
-                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
-                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod',sameSite:'none' });
+                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' ,sameSite:'none'});
                 
                 // Return user data with the response
                 res.status(200).json({
@@ -112,7 +112,7 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
       
       // Redirect to home page using relative path
-      res.redirect('/home');
+      res.redirect(`/auth/callback?userId=${user._id}&username=${encodeURIComponent(user.username)}&email=${user.email}&role=${user.role}&createdAt=${user.createdAt}`);
     } catch (error) {
       next(error);
     }
