@@ -21,6 +21,7 @@ export default function UserAvatar() {
             <Avatar 
                 src={user?.avatarUrl || ""}
                 sx={{ width: 40, height: 40 }}
+                key={user?.avatarUrl}
             >
                 {getInitials(user?.username)}
             </Avatar>

@@ -40,6 +40,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           headers: {
             'Content-Type': 'application/json',
           },
+          cache: 'no-cache',
         });
 
         if (!response.ok) {
@@ -48,6 +49,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const userData = await response.json();
         setUser(userData);
+        return userData;
       } catch (error) {
         console.error('Error refreshing user details:', error);
         localStorage.removeItem('user_id');
