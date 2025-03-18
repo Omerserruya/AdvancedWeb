@@ -102,14 +102,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     try {
-      // Check if the email exists but with different authentication method
-      const existingUser = await userModel.findOne({ 
-        email: user.email, 
-        // Check if this is a different user (has different ID)
-        _id: { $ne: user._id } 
-      });
 
-      if (existingUser) {
+      if (!user) {
         // Email exists but belongs to a different user
         return res.redirect(`/auth/callback?error=email_exists`);
       }
