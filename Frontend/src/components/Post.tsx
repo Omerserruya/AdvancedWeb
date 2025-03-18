@@ -37,6 +37,8 @@ import { CommentsSection } from './CommentsSection';
 import { PostComment } from '../types/comment';
 import api from '../utils/api';
 import { useUser } from '../contexts/UserContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PostImage {
   url: string;
@@ -79,6 +81,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post.title);
   const [editedContent, setEditedContent] = useState(post.content);
+  const [showPreview, setShowPreview] = useState(false);
   const [authorData, setAuthorData] = useState<User | null>(null);
   
   // Image display state
@@ -205,7 +208,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp: string | number | Date) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -694,9 +697,17 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
           }
         />
         <CardContent>
-          <Typography variant="body1" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
-            {post.content}
-          </Typography>
+          {post.content && post.content.includes('#') || post.content.includes('```') ? (
+            <Box sx={{ '& img': { maxWidth: '100%' }, '& pre': { overflow: 'auto', padding: 1, bgcolor: 'rgba(0,0,0,0.04)' } }}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {post.content}
+              </ReactMarkdown>
+            </Box>
+          ) : (
+            <Typography variant="body1" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
+              {post.content}
+            </Typography>
+          )}
         </CardContent>
         
         <CardActions>
@@ -786,15 +797,42 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedTitle(e.target.value)}
             sx={{ mb: 2 }}
           />
-          <TextField
-            label="Content"
-            multiline
-            rows={4}
-            fullWidth
-            value={editedContent}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedContent(e.target.value)}
-            sx={{ mb: 3 }}
-          />
+          
+          <Box sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+              <Button 
+                variant={!showPreview ? "contained" : "outlined"} 
+                size="small" 
+                onClick={() => setShowPreview(false)}
+              >
+                Edit
+              </Button>
+              <Button 
+                variant={showPreview ? "contained" : "outlined"} 
+                size="small" 
+                onClick={() => setShowPreview(true)}
+              >
+                Preview
+              </Button>
+            </Stack>
+            
+            {!showPreview ? (
+              <TextField
+                label="Content"
+                multiline
+                rows={4}
+                fullWidth
+                value={editedContent}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedContent(e.target.value)}
+              />
+            ) : (
+              <Paper variant="outlined" sx={{ p: 2, minHeight: '120px', maxHeight: '400px', overflow: 'auto' }}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {editedContent}
+                </ReactMarkdown>
+              </Paper>
+            )}
+          </Box>
           
           {/* Image Edit Section */}
           <Box sx={{ mb: 2, border: '1px solid', borderColor: 'divider', p: 2, borderRadius: 1 }}>

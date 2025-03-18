@@ -12,9 +12,12 @@ import {
   Stack,
   Alert,
   CircularProgress,
+  Paper,
 } from '@mui/material';
 import { Close as CloseIcon, CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import api from '../utils/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -29,6 +32,7 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -167,23 +171,66 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
               }
             />
 
-            <TextField
-              label="Content"
-              multiline
-              rows={4}
-              fullWidth
-              variant="outlined"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              error={content.trim().length > 0 && content.trim().length < 10}
-              helperText={
-                content.trim().length > 0 && content.trim().length < 10
-                  ? 'Content must be at least 10 characters long'
-                  : ''
-              }
-              placeholder="Share your thoughts..."
-            />
+            <Box>
+              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                <Button 
+                  variant={!showPreview ? "contained" : "outlined"} 
+                  size="small" 
+                  onClick={() => setShowPreview(false)}
+                >
+                  Edit
+                </Button>
+                <Button 
+                  variant={showPreview ? "contained" : "outlined"} 
+                  size="small" 
+                  onClick={() => setShowPreview(true)}
+                >
+                  Preview
+                </Button>
+                <Typography variant="caption" sx={{ ml: 1, alignSelf: 'center', color: 'text.secondary' }}>
+                  Markdown supported
+                </Typography>
+              </Stack>
+              
+              {!showPreview ? (
+                <TextField
+                  label="Content"
+                  multiline
+                  rows={4}
+                  fullWidth
+                  variant="outlined"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  required
+                  error={content.trim().length > 0 && content.trim().length < 10}
+                  helperText={
+                    content.trim().length > 0 && content.trim().length < 10
+                      ? 'Content must be at least 10 characters long'
+                      : ''
+                  }
+                  placeholder="Share your thoughts... Markdown supported!"
+                />
+              ) : (
+                <Paper variant="outlined" sx={{ 
+                  p: 2, 
+                  minHeight: '120px', 
+                  maxHeight: '400px', 
+                  overflow: 'auto',
+                  '& img': { maxWidth: '100%' }, 
+                  '& pre': { overflow: 'auto', padding: 1, bgcolor: 'rgba(0,0,0,0.04)' } 
+                }}>
+                  {content ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {content}
+                    </ReactMarkdown>
+                  ) : (
+                    <Typography color="text.secondary" variant="body2" sx={{ fontStyle: 'italic' }}>
+                      Preview will appear here...
+                    </Typography>
+                  )}
+                </Paper>
+              )}
+            </Box>
 
             <Box>
               <Stack direction="row" spacing={2} alignItems="center">
