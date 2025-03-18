@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Avatar,
   Box,
   Stack,
   Typography,
@@ -17,6 +16,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { PostComment } from '../types/comment';
+import UserAvatar from './UserAvatar';
 
 interface CommentComponentProps {
   comment: PostComment;
@@ -83,17 +83,6 @@ export const CommentComponent: React.FC<CommentComponentProps> = ({
     });
   };
 
-  // Get initials from username for avatar fallback
-  const getInitials = (username: string): string => {
-    if (!username) return '?';
-    
-    return username
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-  };
-
   // If in edit mode, show edit form
   if (isEditing) {
     return (
@@ -104,17 +93,15 @@ export const CommentComponent: React.FC<CommentComponentProps> = ({
         mb: 1
       }}>
         <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          <Avatar 
-            sx={{ 
-              width: 32, 
-              height: 32, 
-              bgcolor: 'primary.main', 
-              fontSize: '0.875rem' 
-            }}
-            src={comment.userAvatar}
-          >
-            {getInitials(comment.user)}
-          </Avatar>
+          <Box sx={{ flexShrink: 0 }}>
+            <UserAvatar
+              username={comment.user}
+              avatarUrl={comment.userAvatar}
+              size={32}
+              showUsername={false}
+              userFromProps={true}
+            />
+          </Box>
           <Box sx={{ flexGrow: 1 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -166,17 +153,15 @@ export const CommentComponent: React.FC<CommentComponentProps> = ({
       mb: 1
     }}>
       <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <Avatar 
-          sx={{ 
-            width: 32, 
-            height: 32, 
-            bgcolor: 'primary.main', 
-            fontSize: '0.875rem' 
-          }}
-          src={comment.userAvatar}
-        >
-          {getInitials(comment.user)}
-        </Avatar>
+        <Box sx={{ flexShrink: 0 }}>
+          <UserAvatar
+            username={comment.user}
+            avatarUrl={comment.userAvatar}
+            size={32}
+            showUsername={false}
+            userFromProps={true}
+          />
+        </Box>
         <Box sx={{ flexGrow: 1 }}>
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
             <Stack direction="row" spacing={1} alignItems="center">

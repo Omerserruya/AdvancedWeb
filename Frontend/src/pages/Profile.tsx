@@ -3,10 +3,11 @@ import {
   Box, Typography, Avatar, Stack, CircularProgress, Paper, Grid, Divider,
   TextField, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, PhotoCamera } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, PhotoCamera, Edit } from '@mui/icons-material';
 import { useUser } from '../contexts/UserContext';
 import { Post } from '../components/Post';
 import api from '../utils/api';
+import UserAvatar from '../components/UserAvatar';
 
 interface User {
   _id: string;
@@ -281,24 +282,19 @@ function Profile() {
         <Stack spacing={3}>
           <Stack direction="row" spacing={2} alignItems="center">
             <Box position="relative">
-              <Avatar 
-                sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  bgcolor: avatarColor,
-                  cursor: 'pointer'
-                }}
-                src={user.avatarUrl || ""}
-                onClick={handlePhotoDialogOpen}
-              >
-                {getInitials(user.username)}
-              </Avatar>
-              <IconButton 
+              <UserAvatar
+                username={user.username}
+                avatarUrl={user.avatarUrl}
+                size={80}
+                showUsername={false}
+                userFromProps={true}
+              />
+              <IconButton
                 size="small" 
-                sx={{ 
-                  position: 'absolute', 
-                  bottom: 0, 
-                  right: 0, 
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
                   backgroundColor: 'white' 
                 }}
                 onClick={handlePhotoDialogOpen}
@@ -425,12 +421,13 @@ function Profile() {
                 sx={{ width: 150, height: 150, mb: 2 }}
               />
             ) : (
-              <Avatar 
-                sx={{ width: 150, height: 150, mb: 2, bgcolor: avatarColor }}
-                src={user.avatarUrl || ""}
-              >
-                {getInitials(user.username)}
-              </Avatar>
+              <UserAvatar
+                username={user.username}
+                avatarUrl={user.avatarUrl}
+                size={150}
+                showUsername={false}
+                userFromProps={true}
+              />
             )}
             
             <Button

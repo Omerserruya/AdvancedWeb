@@ -255,50 +255,6 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
               </IconButton>
             </Box>
 
-            <Box sx={{ position: 'relative' }}>
-              <TextField
-                label="Content"
-                multiline
-                rows={4}
-                fullWidth
-                variant="outlined"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-                error={content.trim().length > 0 && content.trim().length < 10}
-                helperText={
-                  content.trim().length > 0 && content.trim().length < 10
-                    ? 'Content must be at least 10 characters long'
-                    : ''
-                }
-                placeholder="Share your thoughts..."
-              />
-              <IconButton
-                onClick={() => generateWithAI('content')}
-                disabled={generatingContent}
-                size="small"
-                color="primary"
-                title="Generate with AI"
-                sx={{
-                  position: 'absolute',
-                  bottom: 8,
-                  right: 8,
-                  bgcolor: 'background.paper',
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                  zIndex: 1,
-                }}
-              >
-                {generatingContent ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <AutoAwesomeIcon />
-                )}
-              </IconButton>
-            </Box>
-
-
             <Box>
               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                 <Button 
@@ -321,23 +277,48 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
               </Stack>
               
               {!showPreview ? (
-                <TextField
-                  label="Content"
-                  multiline
-                  rows={4}
-                  fullWidth
-                  variant="outlined"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  required
-                  error={content.trim().length > 0 && content.trim().length < 10}
-                  helperText={
-                    content.trim().length > 0 && content.trim().length < 10
-                      ? 'Content must be at least 10 characters long'
-                      : ''
-                  }
-                  placeholder="Share your thoughts... Markdown supported!"
-                />
+                <Box sx={{ position: 'relative' }}>
+                  <TextField
+                    label="Content"
+                    multiline
+                    rows={4}
+                    fullWidth
+                    variant="outlined"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    error={content.trim().length > 0 && content.trim().length < 10}
+                    helperText={
+                      content.trim().length > 0 && content.trim().length < 10
+                        ? 'Content must be at least 10 characters long'
+                        : ''
+                    }
+                    placeholder="Share your thoughts... Markdown supported!"
+                  />
+                  <IconButton
+                    onClick={() => generateWithAI('content')}
+                    disabled={generatingContent}
+                    size="small"
+                    color="primary"
+                    title="Generate with AI"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: 8,
+                      bgcolor: 'background.paper',
+                      '&:hover': {
+                        bgcolor: 'rgba(0, 0, 0, 0.04)',
+                      },
+                      zIndex: 1,
+                    }}
+                  >
+                    {generatingContent ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <AutoAwesomeIcon />
+                    )}
+                  </IconButton>
+                </Box>
               ) : (
                 <Paper variant="outlined" sx={{ 
                   p: 2, 

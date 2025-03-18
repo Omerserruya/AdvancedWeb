@@ -39,6 +39,7 @@ import api from '../utils/api';
 import { useUser } from '../contexts/UserContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import UserAvatar from './UserAvatar';
 
 interface PostImage {
   url: string;
@@ -357,11 +358,17 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     setEditedImagePreview(null);
     setRemoveCurrentImage(true);
     
-    // Reset the file input by clearing its value
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
+    // Force a re-render of the file input by updating the state immediately
+    setIsEditing(prevState => {
+      // This is just to trigger a re-render while maintaining the current state
+      setTimeout(() => {
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      }, 50);
+      return prevState;
+    });
   };
   
   const getCurrentImagePreview = (): string | null => {
@@ -395,6 +402,10 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
         // Add a flag to indicate image should be removed
         formData.append('removeImage', 'true');
         console.log('Setting removeImage flag to true');
+      } else {
+        // Explicitly indicate we want to keep existing image (helps backend differentiate)
+        formData.append('keepExistingImage', 'true');
+        console.log('Keeping existing image');
       }
       
       console.log('Submitting post update with removeImage:', removeCurrentImage);
@@ -420,6 +431,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
       setEditedImage(null);
       setEditedImagePreview(null);
       setRemoveCurrentImage(false);
+      setShowPreview(false);
     } catch (error) {
       console.error('Error updating post:', error);
     }
@@ -650,6 +662,19 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     return null;
   };
 
+  // Add a useEffect to handle file input reset when dialog opens/closes
+  useEffect(() => {
+    if (isEditing) {
+      // Reset file input when dialog opens
+      setTimeout(() => {
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      }, 100);
+    }
+  }, [isEditing]);
+
   return (
     <>
       <Card
@@ -670,12 +695,13 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
         {renderPostImage()}
         <CardHeader
           avatar={
-            <Avatar 
-              sx={{ width: 40, height: 40 }}
-              src={getAvatarUrl()}
-            >
-              {getInitials(getUsername())}
-            </Avatar>
+            <UserAvatar 
+              username={getUsername()}
+              avatarUrl={getAvatarUrl()}
+              size={40}
+              showUsername={false}
+              userFromProps={true}
+            />
           }
           title={
             <Typography variant="h6" component="h2" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
@@ -814,6 +840,9 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
               >
                 Preview
               </Button>
+              <Typography variant="caption" sx={{ ml: 1, alignSelf: 'center', color: 'text.secondary' }}>
+                Markdown supported
+              </Typography>
             </Stack>
             
             {!showPreview ? (
@@ -902,7 +931,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
                   hidden
                   accept="image/*"
                   onChange={handleEditImageChange}
-                  key={removeCurrentImage ? 'removed' : 'active'}
+                  key={`file-input-${Date.now()}-${removeCurrentImage}-${!!editedImage}`}
                 />
               </Button>
               
