@@ -75,8 +75,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 else user.tokens.push(refreshToken);
                 await user.save();
 
-                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
-                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod',sameSite:'none' });
+                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' ,sameSite:'none'});
                 
                 // Return user data with the response
                 res.status(200).json({
@@ -102,6 +102,19 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     try {
+      // Check if the email exists but with different authentication method
+      const existingUser = await userModel.findOne({ 
+        email: user.email, 
+        // Check if this is a different user (has different ID)
+        _id: { $ne: user._id } 
+      });
+
+      if (existingUser) {
+        // Email exists but belongs to a different user
+        return res.redirect(`/auth/callback?error=email_exists`);
+      }
+
+      // Proceed with authentication as normal
       const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as Secret, process.env.JWT_EXPIRES_IN as string);
       const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as Secret, process.env.JWT_REFRESH_EXPIRES_IN as string);
       
@@ -112,7 +125,7 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
       
       // Redirect to home page using relative path
-      res.redirect('/home');
+      res.redirect(`/auth/callback?userId=${user._id}&username=${encodeURIComponent(user.username)}&email=${user.email}&role=${user.role}&createdAt=${user.createdAt}`);
     } catch (error) {
       next(error);
     }

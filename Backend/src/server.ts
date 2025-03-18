@@ -9,7 +9,6 @@ import postsRoute from "./routes/post_route";
 import healthRoute from "./routes/health_route";
 import usersRoute from "./routes/user_route";
 import authRoute from "./routes/auth_route";
-import passport from '../passport-config'; 
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
