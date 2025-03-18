@@ -17,10 +17,10 @@ import fs from 'fs';
  * @swagger
  * components:
  *   securitySchemes:
- *     ApiKeyAuth:
+ *     cookieAuth:
  *       type: apiKey
- *       in: header
- *       name: authorization
+ *       in: cookie
+ *       name: accessToken
  *   schemas:
  *     User:
  *       type: object
@@ -51,7 +51,7 @@ import fs from 'fs';
  *     summary: Create a new user
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -106,7 +106,7 @@ usersRoute.get('/:id', userController.getUserById);
  *     summary: Update a user by ID
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -137,7 +137,7 @@ usersRoute.put('/:id', authentification, userController.updateUser);
  *     summary: Delete a user by ID
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -190,6 +190,44 @@ const upload = multer({
 });
 
 // Add avatar upload route
+/**
+ * @swagger
+ * /users/{id}/avatar:
+ *   post:
+ *     summary: Upload a user avatar
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: User avatar image file
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *       400:
+ *         description: Bad request or invalid file type
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 usersRoute.post(
   '/:id/avatar', 
   authentification, 

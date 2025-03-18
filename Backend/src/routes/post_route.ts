@@ -18,10 +18,10 @@ import postUpload from '../middleware/multer'; // Import the updated multer midd
  * @swagger
  * components:
  *   securitySchemes:
- *     ApiKeyAuth:
+ *     cookieAuth:
  *       type: apiKey
- *       in: header
- *       name: authorization
+ *       in: cookie
+ *       name: accessToken
  *   schemas:
  *     Post:
  *       type: object
@@ -57,7 +57,7 @@ import postUpload from '../middleware/multer'; // Import the updated multer midd
  *     summary: Create a new post
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -130,7 +130,7 @@ postsRoute.get('/:id', postsController.getPostById);
  *     summary: Update a post by ID
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -173,7 +173,7 @@ postsRoute.put('/:id', authentification, postUpload.single('image'), postsContro
  *     summary: Delete a post by ID
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -198,7 +198,7 @@ postsRoute.delete('/:id', authentification, postsController.deletePost);
  *     summary: Update a post's image
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -237,7 +237,7 @@ postsRoute.post('/:id/image', authentification, postUpload.single('image'), post
  *     summary: Remove a post's image
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -264,7 +264,7 @@ postsRoute.delete('/:id/image', authentification, postsController.removePostImag
  *     summary: Create a new comment on a post
  *     tags: [Comments]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: postID
@@ -353,7 +353,7 @@ postsRoute.get('/:postID/comments/:commentID', Comment.getComments);
  *     summary: Update a comment by ID
  *     tags: [Comments]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: postID
@@ -392,7 +392,7 @@ postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateC
  *     summary: Delete a comment by ID
  *     tags: [Comments]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: postID
@@ -427,7 +427,7 @@ postsRoute.delete('/:postID/comments/:commentID', authentification, Comment.dele
  *     summary: Like or unlike a post
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -454,7 +454,7 @@ postsRoute.post('/:id/like', authentification, postsController.toggleLike);
  *     summary: Check if current user has liked a post
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -479,7 +479,7 @@ postsRoute.get('/:id/like', authentification, postsController.checkLikeStatus);
  *     summary: Update post metadata (comments count, likes count)
  *     tags: [Posts]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

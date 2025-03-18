@@ -114,12 +114,12 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 };
 // Login External users - after login with google or github for tokens
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as IUser;
     try {
-
+      const user = req.user as IUser;
+      
       if (!user) {
-        // Email exists but belongs to a different user
-        return res.redirect(`/auth/callback?error=email_exists`);
+        // This should not happen with our route middleware, but just in case
+        return res.redirect(`/auth/callback?error=auth_failed`);
       }
 
       // Proceed with authentication as normal
@@ -135,7 +135,8 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       // Redirect to home page using relative path
       res.redirect(`/auth/callback?userId=${user._id}&username=${encodeURIComponent(user.username)}&email=${user.email}&role=${user.role}&createdAt=${user.createdAt}`);
     } catch (error) {
-      next(error);
+      console.error("Login external error:", error);
+      res.redirect(`/auth/callback?error=server_error`);
     }
 };
   

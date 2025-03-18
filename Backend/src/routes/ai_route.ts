@@ -3,9 +3,70 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import e from 'express';
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   - name: AI
+ *     description: The AI Content Generation API
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AIGenerationRequest:
+ *       type: object
+ *       required:
+ *         - type
+ *         - text
+ *       properties:
+ *         type:
+ *           type: string
+ *           enum: [title, content]
+ *           description: The type of content to generate
+ *         text:
+ *           type: string
+ *           description: The input text to base generation on
+ *       example:
+ *         type: 'title'
+ *         text: 'A blog post about modern web development techniques'
+ *     AIGenerationResponse:
+ *       type: object
+ *       properties:
+ *         generatedText:
+ *           type: string
+ *           description: The AI-generated content
+ *       example:
+ *         generatedText: 'The Future of Web Development: Modern Techniques You Need to Know'
+ */
+
 // Initialize the Google Generative AI with API key from environment variables
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+/**
+ * @swagger
+ * /ai/generate:
+ *   post:
+ *     summary: Generate AI content
+ *     tags: [AI]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AIGenerationRequest'
+ *     responses:
+ *       200:
+ *         description: AI content generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AIGenerationResponse'
+ *       400:
+ *         description: Bad request - missing required fields or invalid type
+ *       500:
+ *         description: Server error during content generation
+ */
 router.post('/generate', async (req: Request, res: Response) => {
   try {
     // Properly type the request body
