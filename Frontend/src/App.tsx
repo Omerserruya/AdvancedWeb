@@ -1,11 +1,8 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import { UserProvider } from './contexts/UserContext';
-import OAuthCallback from './components/OAuthCallback';
 import { ThemeProvider } from './theme/ThemeProvider';
 import Layout from './components/Layout';
 
@@ -14,17 +11,13 @@ function App() {
     <ThemeProvider>
       <UserProvider>
         <Routes>
-          {/* Auth routes */}
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/google/callback" element={<OAuthCallback />} />
-          <Route path="/auth/github/callback" element={<OAuthCallback />} />
+          {/* Redirect root to home */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
           
-          {/* Protected routes with Layout */}
+          {/* Main routes */}
           <Route element={<Layout />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="home" element={<Home />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </UserProvider>

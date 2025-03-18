@@ -27,7 +27,7 @@ interface PostType {
 }
 
 function Profile() {
-  const { user: contextUser, refreshUserDetails } = useUser();
+  const { user: contextUser } = useUser();
   // Use type assertion to add avatarUrl property
   const user = contextUser as User;
   const [posts, setPosts] = useState<PostType[]>([]);
@@ -42,7 +42,6 @@ function Profile() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    refreshUserDetails();
     if (user?._id) {
       fetchUserPosts();
       setUsername(user.username || '');
@@ -75,7 +74,6 @@ function Profile() {
     if (isEditing && username.trim()) {
       try {
         await api.put(`/api/users/${user?._id}`, { username });
-        refreshUserDetails();
         setIsEditing(false);
       } catch (error) {
         console.error('Error updating username:', error);
@@ -123,7 +121,6 @@ function Profile() {
       await api.post(`/api/users/${user?._id}/avatar`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      refreshUserDetails();
       handlePhotoDialogClose();
     } catch (error) {
       console.error('Error uploading photo:', error);

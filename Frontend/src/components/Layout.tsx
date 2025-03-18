@@ -1,18 +1,10 @@
 import React from 'react';
 import { Box } from "@mui/material";
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import SideMenu from './SideMenuCustom/SideMenu';
 import Header from './Header';
-import { useUser } from '../contexts/UserContext';
 
 function Layout() {
-  const { user } = useUser();
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar */}
