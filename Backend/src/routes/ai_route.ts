@@ -32,7 +32,7 @@ router.post('/generate', async (req: Request, res: Response) => {
           prompt = `Generate one short, catchy, and simple title based on the following content. Return only the title: "${text}"`;
         } else if (type === 'content') {
           if(text.length<5) {
-            prompt = `Generate a short, informative, and engaging post about a technology topic. If a specific tech subject is provided, focus on that. If no specific subject is given, choose a new or trending technology to share insights about. The post should be clear, concise, and interesting for a general audience.`
+            prompt = `Generate a short, informative, and engaging post about a technology topic. If a specific tech subject is provided, focus on that. If no specific subject is given, choose a new or trending technology to share insights about. The post should be clear, concise, and interesting for a general tech audience - return Just the Body.`
           }else {
             prompt = `Generate a short, informative post based on the following topic or phrase. The post should be well-structured, engaging, and focused on sharing useful information about the tech subject. Keep the language clear, concise, and appealing to a broad audience:"${text}"`;
         }
