@@ -17,6 +17,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Modal,
+  Paper,
+  Theme
 } from '@mui/material';
 import {
   Favorite as FavoriteIcon,
@@ -33,6 +36,7 @@ import { alpha } from '@mui/material/styles';
 import { CommentsSection } from './CommentsSection';
 import { PostComment } from '../types/comment';
 import api from '../utils/api';
+import { useUser } from '../contexts/UserContext';
 
 interface PostImage {
   url: string;
@@ -55,6 +59,8 @@ interface PostType {
   initialComments?: PostComment[];
   images?: PostImage[]; // For backward compatibility
   image?: PostImage; // New single image field
+  likesCount?: number;
+  commentsCount?: number;
 }
 
 interface PostProps {
@@ -66,9 +72,10 @@ interface PostProps {
 
 export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onEdit }) => {
   const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(post.initialLikes || 0);
+  const [likes, setLikes] = useState(post.likesCount || post.initialLikes || 0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<PostComment[]>(post.initialComments || []);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post.title);
   const [editedContent, setEditedContent] = useState(post.content);
@@ -79,6 +86,12 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
   const [editedImage, setEditedImage] = useState<File | null>(null);
   const [editedImagePreview, setEditedImagePreview] = useState<string | null>(null);
   const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
+  
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  
+  // Get current user from context
+  const { user: currentUser } = useUser();
   
   // Fetch user data if we only have the ID
   useEffect(() => {
@@ -99,6 +112,74 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     fetchAuthorData();
   }, [post.userID]);
   
+  // Check if the current user has liked this post
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const response = await api.get(`/api/posts/${post._id}/like`);
+        if (response.data) {
+          setLiked(response.data.isLiked);
+          setLikes(response.data.likesCount);
+        }
+      } catch (error) {
+        console.error('Error checking like status:', error);
+      }
+    };
+    
+    checkLikeStatus();
+  }, [post._id, currentUser]);
+  
+  // Fetch comments for the post
+  useEffect(() => {
+    const fetchComments = async () => {
+      setIsLoadingComments(true);
+      try {
+        const response = await api.get(`/api/posts/${post._id}/comments`);
+        if (response.data) {
+          // Transform API comment data to match PostComment interface
+          const formattedComments: PostComment[] = response.data.map((comment: any) => {
+            // Check if current user is the author of this comment
+            const isCurrentUser = currentUser && 
+              comment.userID && 
+              currentUser._id === comment.userID._id;
+              
+            return {
+              id: comment._id,
+              user: comment.userID.username || 'Unknown User',
+              content: comment.content,
+              timestamp: comment.createdAt,
+              userAvatar: comment.userID.avatarUrl || undefined,
+              isCurrentUser
+            };
+          });
+          setComments(formattedComments);
+        }
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+
+    if (showCommentsModal) {
+      fetchComments();
+    }
+  }, [post._id, showCommentsModal, currentUser]);
+  
+  // Update comments count when comments array changes or post.commentsCount updates
+  useEffect(() => {
+    // If we have loaded comments, always use the actual length from the comments array
+    if (comments.length > 0 || showCommentsModal) {
+      setCommentsCount(comments.length);
+    } 
+    // Otherwise, use the count from the backend if available
+    else if (post.commentsCount !== undefined) {
+      setCommentsCount(post.commentsCount);
+    }
+  }, [comments.length, showCommentsModal, post._id]);
+  
   const handleOpenImageDialog = () => {
     setOpenImageDialog(true);
   };
@@ -107,9 +188,21 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     setOpenImageDialog(false);
   };
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes((prev: number) => liked ? prev - 1 : prev + 1);
+  const handleLike = async () => {
+    if (!currentUser) {
+      // Handle not logged in case
+      return;
+    }
+    
+    try {
+      const response = await api.post(`/api/posts/${post._id}/like`);
+      if (response.data) {
+        setLiked(response.data.isLiked);
+        setLikes(response.data.likesCount);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -129,21 +222,59 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     });
   };
 
-  const handleAddComment = (newCommentContent: string) => {
-    const currentUser = {
-      username: "YourUsername",
-      avatar: "YourAvatarURL"
-    };
+  const handleAddComment = async (newCommentContent: string) => {
+    if (!currentUser) return;
+    
+    try {
+      // Post the comment to the API
+      const response = await api.post(`/api/posts/${post._id}/comments`, {
+        content: newCommentContent
+      });
 
-    const comment: PostComment = {
-      id: Date.now().toString(),
-      user: currentUser.username,
-      content: newCommentContent,
-      timestamp: new Date().toLocaleString(),
-      userAvatar: currentUser.avatar,
-      isCurrentUser: true
-    };
-    setComments(prev => [...prev, comment]);
+      if (response.data) {
+        // The response now has populated user data
+        const newComment: PostComment = {
+          id: response.data._id,
+          user: response.data.userID.username || currentUser.username,
+          content: newCommentContent,
+          timestamp: response.data.createdAt || new Date().toISOString(),
+          userAvatar: response.data.userID.avatarUrl || currentUser.avatarUrl,
+          isCurrentUser: true
+        };
+        
+        // Add the new comment to the comments array
+        setComments((prev: PostComment[]) => [...prev, newComment]);
+        
+        // Explicitly update the comment count
+        const updatedCount = comments.length + 1;
+        setCommentsCount(updatedCount);
+        
+        // Refresh comments to ensure consistency with server data
+        const refreshCommentsResponse = await api.get(`/api/posts/${post._id}/comments`);
+        if (refreshCommentsResponse.data) {
+          const refreshedComments = refreshCommentsResponse.data.map((comment: any) => {
+            const isCurrentUser = currentUser && 
+              comment.userID && 
+              currentUser._id === comment.userID._id;
+              
+            return {
+              id: comment._id,
+              user: comment.userID.username || 'Unknown User',
+              content: comment.content,
+              timestamp: comment.createdAt,
+              userAvatar: comment.userID.avatarUrl || undefined,
+              isCurrentUser
+            };
+          });
+          setComments(refreshedComments);
+          
+          // Update count again with server data
+          setCommentsCount(refreshedComments.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   const getInitials = (username: string | undefined) => {
@@ -323,6 +454,88 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     }, 0);
   };
 
+  const handleOpenCommentsModal = () => {
+    setShowCommentsModal(true);
+  };
+
+  const handleCloseCommentsModal = async () => {
+    // Make sure the comments count is updated with the actual comments length
+    setCommentsCount(comments.length);
+    
+    // Only update if the count has changed
+    if (comments.length !== (post.commentsCount || 0)) {
+      try {
+        // Save the updated count to post object for next render
+        if (onEdit) {
+          const updatedPost = { 
+            ...post, 
+            commentsCount: comments.length 
+          };
+          onEdit(updatedPost);
+        }
+        
+        // Optionally, update the post's commentsCount directly in the backend
+        // This helps ensure consistency across the application
+        await api.patch(`/api/posts/${post._id}/metadata`, {
+          commentsCount: comments.length
+        }).catch((err: Error) => {
+          // Silently handle error - the count will be correct locally anyway
+          console.warn('Could not update post metadata:', err);
+        });
+      } catch (error) {
+        console.error('Error updating comment count:', error);
+      }
+    }
+    
+    setShowCommentsModal(false);
+  };
+
+  const handleEditComment = async (commentId: string, newContent: string): Promise<void> => {
+    try {
+      // Call API to update the comment
+      const response = await api.put(`/api/posts/${post._id}/comments/${commentId}`, {
+        content: newContent
+      });
+
+      if (response.status === 200) {
+        // Update the comment in the local state
+        setComments((prevComments: PostComment[]) => 
+          prevComments.map((comment: PostComment) => 
+            comment.id === commentId ? { ...comment, content: newContent } : comment
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error editing comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string): Promise<void> => {
+    try {
+      // Call API to delete the comment
+      const response = await api.delete(`/api/posts/${post._id}/comments/${commentId}`);
+
+      if (response.status === 200) {
+        // Remove the comment from local state
+        setComments((prevComments: PostComment[]) => prevComments.filter(comment => comment.id !== commentId));
+        
+        // Update the comments count
+        const newCount = commentsCount - 1;
+        setCommentsCount(newCount);
+        
+        // Update post object if needed
+        if (onEdit) {
+          onEdit({
+            ...post,
+            commentsCount: newCount
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
   const renderOwnerControls = () => {
     if (!isOwner) return null;
     
@@ -441,13 +654,13 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
           maxWidth: 800,
           width: '100%',
           mb: 2,
-          boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, 0.05)}`,
+          boxShadow: (theme: Theme) => `0 2px 8px ${alpha(theme.palette.common.black, 0.05)}`,
           borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',
           transition: 'box-shadow 0.2s ease',
           '&:hover': {
-            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`
+            boxShadow: (theme: Theme) => `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`
           }
         }}
       >
@@ -498,30 +711,54 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
             {likes}
           </Typography>
           <IconButton
-            onClick={() => setShowComments(!showComments)}
+            onClick={handleOpenCommentsModal}
             aria-label="show comments"
-            aria-expanded={showComments}
           >
             <CommentIcon />
           </IconButton>
           <Typography variant="body2" color="text.secondary">
-            {comments.length}
+            {commentsCount}
           </Typography>
         </CardActions>
         
         {renderOwnerControls()}
-        
-        {showComments && (
-          <>
-            <Divider />
-            <CommentsSection 
-              comments={comments} 
-              onAddComment={handleAddComment} 
-              showComments={showComments}
-            />
-          </>
-        )}
       </Card>
+      
+      {/* Comments Modal */}
+      <Dialog
+        open={showCommentsModal}
+        onClose={handleCloseCommentsModal}
+        fullWidth
+        maxWidth="sm"
+        scroll="paper"
+        aria-labelledby="comments-dialog-title"
+      >
+        <DialogTitle id="comments-dialog-title">
+          Comments
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseCommentsModal}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <CommentsSection 
+            comments={comments} 
+            onAddComment={handleAddComment} 
+            onEditComment={handleEditComment}
+            onDeleteComment={handleDeleteComment}
+            showComments={true}
+            isLoading={isLoadingComments}
+            postId={post._id}
+          />
+        </DialogContent>
+      </Dialog>
       
       {/* Edit Dialog */}
       <Dialog open={isEditing} onClose={handleEditCancel} fullWidth maxWidth="sm">
@@ -546,7 +783,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
             label="Title"
             fullWidth
             value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedTitle(e.target.value)}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -555,7 +792,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
             rows={4}
             fullWidth
             value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedContent(e.target.value)}
             sx={{ mb: 3 }}
           />
           

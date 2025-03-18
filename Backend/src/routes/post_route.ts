@@ -420,4 +420,96 @@ postsRoute.put('/:postID/comments/:commentID', authentification, Comment.updateC
  */
 postsRoute.delete('/:postID/comments/:commentID', authentification, Comment.deleteComment);
 
+/**
+ * @swagger
+ * /posts/{id}/like:
+ *   post:
+ *     summary: Like or unlike a post
+ *     tags: [Posts]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: Like status updated successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post or user not found
+ */
+postsRoute.post('/:id/like', authentification, postsController.toggleLike);
+
+/**
+ * @swagger
+ * /posts/{id}/like:
+ *   get:
+ *     summary: Check if current user has liked a post
+ *     tags: [Posts]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     responses:
+ *       200:
+ *         description: Like status retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
+ */
+postsRoute.get('/:id/like', authentification, postsController.checkLikeStatus);
+
+/**
+ * @swagger
+ * /posts/{id}/metadata:
+ *   patch:
+ *     summary: Update post metadata (comments count, likes count)
+ *     tags: [Posts]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The post ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               commentsCount:
+ *                 type: integer
+ *                 description: The number of comments on the post
+ *               likesCount:
+ *                 type: integer
+ *                 description: The number of likes on the post
+ *     responses:
+ *       200:
+ *         description: Post metadata updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Error updating post metadata
+ */
+postsRoute.patch('/:id/metadata', authentification, postsController.updatePostMetadata);
+
 export default postsRoute;

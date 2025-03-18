@@ -21,9 +21,32 @@ interface PostType {
   _id: string;
   title: string;
   content: string;
-  userID: string;
+  userID: string | {
+    _id: string;
+    username: string;
+    avatarUrl?: string;
+  };
   createdAt: string;
-  // Add other fields as needed
+  likesCount?: number;
+  commentsCount?: number;
+  image?: {
+    url: string;
+    filename: string;
+  };
+  images?: Array<{
+    url: string;
+    filename: string;
+  }>;
+  comments?: Array<{
+    _id: string;
+    content: string;
+    userID: {
+      _id: string;
+      username: string;
+      avatarUrl?: string;
+    };
+    createdAt: string;
+  }>;
 }
 
 function Profile() {
@@ -363,9 +386,9 @@ function Profile() {
                 <Grid item xs={12} key={post._id}>
                   <Post 
                     post={post} 
-                    isOwner={true} // Since this is "My Posts", user is always the owner
+                    isOwner={user?._id === (typeof post.userID === 'string' ? post.userID : post.userID._id)}
                     onDelete={() => handleDeletePost(post._id)}
-                    onEdit={handleUpdatePost}
+                    onEdit={(updatedPost) => handleUpdatePost(updatedPost as PostType)}
                   />
                 </Grid>
               ))

@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
   userID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   title: {
@@ -21,8 +22,18 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  // Add these if you want to track likes and comments
+  // Replace likes count with an array of user IDs
   likes: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of user IDs who liked the post
+    default: []
+  },
+  // Track count for performance reasons
+  likesCount: {
+    type: Number,
+    default: 0
+  },
+  // Track count of comments for performance reasons
+  commentsCount: {
     type: Number,
     default: 0
   },

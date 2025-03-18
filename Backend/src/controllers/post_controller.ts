@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import userModel from "../models/user_model";
 import fs from 'fs';
 import path from 'path';
+import mongoose from "mongoose";
 
 const addPost = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -82,8 +83,12 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
     console.log(`Fetching posts with pagination: limit=${limit}, page=${page}, skip=${skip}`);
     console.log(`Filter: ${JSON.stringify(query)}`);
     
-    // Execute query with pagination
+    // Execute query with pagination and populate userID with user data
     const posts = await postModel.find(query)
+      .populate({
+        path: 'userID',
+        select: 'username avatarUrl'
+      })
       .sort({ createdAt: -1 }) // Sort by newest first
       .skip(skip)
       .limit(limit);
@@ -113,7 +118,17 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
 const getPostById = async (req: Request, res: Response) => {
   const postId = req.params.id;
   try {
-    const post = await postModel.findById(postId);
+    // Find post and populate userID and likes with user data
+    const post = await postModel.findById(postId)
+      .populate({
+        path: 'userID',
+        select: 'username avatarUrl'
+      })
+      .populate({
+        path: 'likes',
+        select: 'username avatarUrl'
+      });
+      
     if (post != null) {
       res.send(post);
     } else {
@@ -137,15 +152,18 @@ const deletePost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    if (post.userID !== userId && user?.role !== "admin") {
+    // Convert ObjectId to string for comparison if needed
+    const postUserId = post.userID.toString();
+    
+    if (postUserId !== userId && user?.role !== "admin") {
       res.status(403).json({ message: "Access denied" });
       return;
     }
     
     // Delete post image if exists
-    if (post.image && post.image.filename && post.userID) {
+    if (post.image && post.image.filename) {
       try {
-        const imgPath = path.join('/app/uploads/posts', post.userID, post.image.filename);
+        const imgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
         if (fs.existsSync(imgPath)) {
           fs.unlinkSync(imgPath);
         }
@@ -177,7 +195,10 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    if (post.userID !== userId) {
+    // Convert ObjectId to string for comparison
+    const postUserId = post.userID.toString();
+    
+    if (postUserId !== userId) {
       res.status(403).json({ message: "Access denied" });
       return;
     }
@@ -191,9 +212,9 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
       const file = req.file as Express.Multer.File;
       
       // Delete previous image if it exists
-      if (post.image && post.image.filename && post.userID) {
+      if (post.image && post.image.filename) {
         try {
-          const oldImgPath = path.join('/app/uploads/posts', post.userID, post.image.filename);
+          const oldImgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
           if (fs.existsSync(oldImgPath)) {
             fs.unlinkSync(oldImgPath);
             console.log('Previous image deleted successfully');
@@ -223,9 +244,9 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
       updateData.image = null;
       
       // Delete the existing image file if it exists
-      if (post.image && post.image.filename && post.userID) {
+      if (post.image && post.image.filename) {
         try {
-          const imgPath = path.join('/app/uploads/posts', post.userID, post.image.filename);
+          const imgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
           if (fs.existsSync(imgPath)) {
             fs.unlinkSync(imgPath);
             console.log('Image removed successfully');
@@ -265,7 +286,10 @@ const updatePostImage = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    if (post.userID !== userId) {
+    // Convert ObjectId to string for comparison
+    const postUserId = post.userID.toString();
+    
+    if (postUserId !== userId) {
       res.status(403).json({ message: "Access denied" });
       return;
     }
@@ -276,9 +300,9 @@ const updatePostImage = async (req: Request, res: Response): Promise<void> => {
     }
     
     // Delete previous image if it exists
-    if (post.image && post.image.filename && post.userID) {
+    if (post.image && post.image.filename) {
       try {
-        const oldImgPath = path.join('/app/uploads/posts', post.userID, post.image.filename);
+        const oldImgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
         if (fs.existsSync(oldImgPath)) {
           fs.unlinkSync(oldImgPath);
         }
@@ -322,7 +346,10 @@ const removePostImage = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    if (post.userID !== userId) {
+    // Convert ObjectId to string for comparison
+    const postUserId = post.userID.toString();
+    
+    if (postUserId !== userId) {
       res.status(403).json({ message: "Access denied" });
       return;
     }
@@ -335,8 +362,8 @@ const removePostImage = async (req: Request, res: Response): Promise<void> => {
     
     // Delete the image file
     try {
-      if (post.userID && post.image.filename) {
-        const imgPath = path.join('/app/uploads/posts', post.userID, post.image.filename);
+      if (post.image.filename) {
+        const imgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
         if (fs.existsSync(imgPath)) {
           fs.unlinkSync(imgPath);
         }
@@ -361,6 +388,179 @@ const removePostImage = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// Toggle like for a post
+const toggleLike = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params; // Post ID
+    const userId = req.params.userId; // User ID from authentication middleware
+
+    if (!userId) {
+      res.status(400).json({
+        message: "Missing user ID in request. Authentication may have failed."
+      });
+      return;
+    }
+
+    // Find the post
+    const post = await postModel.findById(id);
+    if (!post) {
+      res.status(404).json({ message: 'Post not found' });
+      return;
+    }
+
+    // Find the user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    // Convert userId to ObjectId for comparison
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    // Check if user already liked the post
+    const isLiked = post.likes.some(likeId => likeId.equals(userObjectId));
+    let updated;
+
+    if (isLiked) {
+      // Unlike: Remove user ID from post's likes array
+      updated = await postModel.findByIdAndUpdate(
+        id,
+        { 
+          $pull: { likes: userObjectId },
+          $inc: { likesCount: -1 } // Decrement likes count
+        },
+        { new: true }
+      );
+
+      // Also remove the post from user's likedPosts
+      await userModel.findByIdAndUpdate(
+        userId,
+        { $pull: { likedPosts: id } }
+      );
+    } else {
+      // Like: Add user ID to post's likes array
+      updated = await postModel.findByIdAndUpdate(
+        id,
+        { 
+          $addToSet: { likes: userObjectId },
+          $inc: { likesCount: 1 } // Increment likes count
+        },
+        { new: true }
+      );
+
+      // Also add the post to user's likedPosts
+      await userModel.findByIdAndUpdate(
+        userId,
+        { $addToSet: { likedPosts: id } }
+      );
+    }
+
+    if (!updated) {
+      throw new Error('Failed to update post likes');
+    }
+
+    res.status(200).json({
+      success: true,
+      isLiked: !isLiked,
+      likes: updated.likes.length,
+      likesCount: updated.likesCount
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({
+      message: "Error toggling like",
+      error: (error as any).message
+    });
+  }
+};
+
+// Check if user has liked a post
+const checkLikeStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params; // Post ID
+    const userId = req.params.userId; // User ID from authentication middleware
+
+    if (!userId) {
+      res.status(400).json({
+        message: "Missing user ID in request. Authentication may have failed."
+      });
+      return;
+    }
+
+    // Find the post
+    const post = await postModel.findById(id);
+    if (!post) {
+      res.status(404).json({ message: 'Post not found' });
+      return;
+    }
+
+    // Convert userId to ObjectId for comparison
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    // Check if user liked the post
+    const isLiked = post.likes.some(likeId => likeId.equals(userObjectId));
+
+    res.status(200).json({
+      isLiked,
+      likesCount: post.likesCount || post.likes.length
+    });
+  } catch (error) {
+    console.error('Error checking like status:', error);
+    res.status(500).json({
+      message: "Error checking like status",
+      error: (error as any).message
+    });
+  }
+};
+
+// Update post metadata (comments count, likes count)
+const updatePostMetadata = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params; // Post ID
+    const userId = req.params.userId; // User ID from auth middleware
+    const { commentsCount, likesCount } = req.body;
+    
+    // Find the post
+    const post = await postModel.findById(id);
+    if (!post) {
+      res.status(404).json({ message: 'Post not found' });
+      return;
+    }
+    
+    // Build update object with only provided fields
+    const updateData: any = {};
+    
+    if (commentsCount !== undefined) {
+      updateData.commentsCount = commentsCount;
+    }
+    
+    if (likesCount !== undefined) {
+      updateData.likesCount = likesCount;
+    }
+    
+    // Only update if there's something to update
+    if (Object.keys(updateData).length > 0) {
+      const updatedPost = await postModel.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true }
+      );
+      
+      res.status(200).json(updatedPost);
+    } else {
+      // Nothing to update
+      res.status(200).json(post);
+    }
+  } catch (error) {
+    console.error('Error updating post metadata:', error);
+    res.status(500).json({
+      message: "Error updating post metadata",
+      error: (error as any).message
+    });
+  }
+};
+
 export default { 
   addPost, 
   getPost, 
@@ -368,5 +568,8 @@ export default {
   deletePost, 
   updatePost, 
   updatePostImage, 
-  removePostImage 
+  removePostImage,
+  toggleLike,
+  checkLikeStatus,
+  updatePostMetadata
 };
