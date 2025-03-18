@@ -26,12 +26,31 @@ passport.use(
     },
     async (accessToken: string, refreshToken: string, profile: GitHubProfile, done: (err: any, user?: any) => void) => {
       try {
+        // Fetch the user's email addresses
+        const emails = profile.emails || [];
+        const primaryEmail = emails[0]?.value;
+
+        if (primaryEmail) {
+          // Check if user already exists with this email
+          const existingUser = await userModel.findOne({ email: primaryEmail });
+          
+          if (existingUser) {
+            // Check if user exists but doesn't have a githubId
+            if (!existingUser.githubId) {
+              // User exists with email but hasn't used GitHub login before
+              return done(new Error('email_exists'), false);
+            }
+            
+            // User exists and has used GitHub login before - continue with login
+            existingUser.githubId = profile.id;
+            await existingUser.save();
+            return done(null, existingUser);
+          }
+        }
+        
+        // No existing user with this email, create a new one
         let user = await userModel.findOne({ githubId: profile.id });
         if (!user) {
-          // Fetch the user's email addresses
-          const emails = profile.emails || [];
-          const primaryEmail = emails[0]?.value;
-
           user = await userModel.create({
             githubId: profile.id,
             username: profile.username,
@@ -64,7 +83,7 @@ passport.use(
           // Check if user exists but doesn't have a googleId (registered with password or other method)
           if (!existingUser.googleId) {
             // User exists with email but hasn't used Google login before
-            return done({ message: 'email_exists' }, false);
+            return done(new Error('email_exists'), false);
           }
           
           // User exists and has used Google login before - continue with login

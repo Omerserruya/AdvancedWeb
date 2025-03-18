@@ -48,20 +48,23 @@ const Login = () => {
     
     if (error) {
       let errorMessage = 'Authentication failed. Please try again.';
+      let severity: 'error' | 'success' = 'error';
       
       // Map error types to specific messages
       if (error === 'email_exists') {
-        errorMessage = 'This email is already registered. Please use a different account or log in with your password.';
+        errorMessage = 'This email is already registered with a different account type. Please use your original login method.';
       } else if (error === 'auth_failed') {
         errorMessage = 'Authentication failed. Please try again.';
       } else if (error === 'unauthorized') {
         errorMessage = 'You are not authorized to access this resource.';
+      } else if (error === 'server_error') {
+        errorMessage = 'A server error occurred. Please try again later.';
       }
       
       setSnackbar({
         open: true,
         message: errorMessage,
-        severity: 'error',
+        severity: severity,
       });
       
       // Clear the URL parameter without refreshing the page
@@ -284,12 +287,12 @@ const Login = () => {
       </Box>
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         sx={{ 
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '500px',
           top: '50% !important',
           transform: 'translateY(-50%) !important',
           left: '0 !important',
@@ -297,14 +300,19 @@ const Login = () => {
           margin: '0 auto',
           '& .MuiAlert-root': {
             width: '100%',
-            justifyContent: 'center'
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            fontSize: '1rem'
           }
         }}
       >
         <Alert 
           severity={snackbar.severity} 
           variant="filled"
-          sx={{ width: '100%' }}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{ 
+            width: '100%',
+            padding: '12px 16px'
+          }}
         >
           {snackbar.message}
         </Alert>

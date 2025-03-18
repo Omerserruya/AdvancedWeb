@@ -1,8 +1,9 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 const authRoute = express.Router();
 import auth from "../controllers/auth_controller";
 import { authentification } from "../controllers/auth_controller";
 import passport from "../../passport-config"; 
+import { IUser } from "../models/user_model";
 
 /**
  * @swagger
@@ -144,10 +145,44 @@ authRoute.get('/test', authentification, auth.test);
 
 // GitHub authentication routes
 authRoute.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
-authRoute.get('/github/callback', passport.authenticate('github', { failureRedirect: '/', session: false }), auth.loginExternal);
+authRoute.get('/github/callback', 
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('github', { session: false }, (err: Error | null, user: IUser | false, info: any) => {
+      if (err && err.message === 'email_exists') {
+        return res.redirect('/auth/callback?error=email_exists');
+      }
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.redirect('/auth/callback?error=auth_failed');
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  auth.loginExternal
+);
 
 // Google authentication routes
 authRoute.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
-authRoute.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), auth.loginExternal);
+authRoute.get('/google/callback', 
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('google', { session: false }, (err: Error | null, user: IUser | false, info: any) => {
+      if (err && err.message === 'email_exists') {
+        return res.redirect('/auth/callback?error=email_exists');
+      }
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.redirect('/auth/callback?error=auth_failed');
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  auth.loginExternal
+);
 
 export default authRoute;
