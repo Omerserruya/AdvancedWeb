@@ -7,6 +7,7 @@ export interface User {
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  avatarUrl?: string;
 }
 
 interface UserContextType {
@@ -21,31 +22,48 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   const refreshUserDetails = async () => {
-    if (user?._id) {
-      try {
-        const response = await fetch(`/api/users/${user._id}`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user details');
-        }
-
-        const userData = await response.json();
-        setUser(userData);
-      } catch (error) {
-        console.error('Error refreshing user details:', error);
+    try {
+      // Get the current user ID
+      const currentUserId = user?._id;
+      if (!currentUserId) {
+        return;
       }
+
+      const response = await fetch(`/api/users/${currentUserId}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // User is not authenticated
+          setUser(null);
+          return;
+        }
+        throw new Error('Failed to fetch user details');
+      }
+
+      const userData = await response.json();
+      // Update user data while preserving the _id
+      setUser(prevUser => ({
+        ...userData,
+        _id: currentUserId // Ensure we keep the original ID
+      }));
+    } catch (error) {
+      console.error('Error refreshing user details:', error);
+      setUser(null);
     }
   };
 
-  // Fetch user details when the component mounts
+  // Fetch user details when the user ID changes
   useEffect(() => {
-    refreshUserDetails();
-  }, []);
+    const currentUserId = user?._id;
+    if (currentUserId) {
+      refreshUserDetails();
+    }
+  }, [user?._id]); // Add back the dependency to update when user ID changes
 
   return (
     <UserContext.Provider value={{ user, setUser, refreshUserDetails }}>

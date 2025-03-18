@@ -18,7 +18,12 @@ export default function UserAvatar() {
 
     return (
         <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
-            <Avatar>{getInitials(user?.username)}</Avatar>
+            <Avatar 
+                src={user?.avatarUrl || ""}
+                sx={{ width: 40, height: 40 }}
+            >
+                {getInitials(user?.username)}
+            </Avatar>
             <Box>
                 <Typography variant="subtitle2">{user?.username || 'Guest'}</Typography>
             </Box>
