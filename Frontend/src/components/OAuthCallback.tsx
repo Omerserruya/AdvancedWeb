@@ -2,42 +2,42 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { CircularProgress, Container, Box } from '@mui/material';
+import { User } from '../contexts/UserContext';
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const { setUser } = useUser();
 
   useEffect(() => {
-    const handleOAuthCallback = async () => {
-      try {
-        // Get user data after OAuth callback
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include',
-        });
+    handleOAuthCallback();
+  }, []);
 
-        if (!response.ok) {
-          throw new Error('Failed to get user data');
-        }
+  const handleOAuthCallback = async () => {
+    try {
+      const response = await fetch('/api/auth/callback/verify', {
+        credentials: 'include',
+      });
+      const data = await response.json();
 
-        const data = await response.json();
-        
-        // Set user data in context
-        setUser({
+      if (data.user) {
+        const userData: User = {
           _id: data.user._id,
           username: data.user.username,
           email: data.user.email,
-        });
-
-        // Redirect to home page
+          role: data.user.role,
+          createdAt: data.user.createdAt,
+          updatedAt: data.user.updatedAt
+        };
+        setUser(userData);
         navigate('/home');
-      } catch (error) {
-        console.error('OAuth callback error:', error);
-        navigate('/login');
+      } else {
+        navigate('/');
       }
-    };
-
-    handleOAuthCallback();
-  }, [setUser, navigate]);
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      navigate('/');
+    }
+  };
 
   return (
     <Container>

@@ -4,15 +4,18 @@ import {
   TextField,
   IconButton,
   Stack,
-  Collapse
+  Collapse,
+  Avatar,
+  Typography
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
-import { CommentComponent, PostComment } from './Comment';
+import { PostComment } from '../types/comment';
+import { CommentComponent } from './Comment';
 
 interface CommentsSectionProps {
   comments: PostComment[];
   showComments: boolean;
-  onAddComment: (comment: string) => void;
+  onAddComment: (content: string) => void;
 }
 
 export const CommentsSection: React.FC<CommentsSectionProps> = ({
@@ -34,7 +37,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       <Box sx={{ p: 2 }}>
         <Stack spacing={2}>
           {comments.map(comment => (
-            <CommentComponent key={comment.id} {...comment} />
+            <CommentComponent key={comment.id} comment={comment} />
           ))}
         </Stack>
 

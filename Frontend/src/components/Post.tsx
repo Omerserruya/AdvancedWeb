@@ -22,56 +22,88 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
-import { CommentComponent, PostComment } from './Comment';
+import { CommentComponent } from './Comment';
 import { CommentsSection } from './CommentsSection';
+import { PostComment } from '../types/comment';
 
-interface PostProps {
+interface PostType {
+  _id: string;
   title: string;
   content: string;
-  author: string;
-  timestamp: string;
-  imageUrl?: string;
+  userID: string | {
+    username: string;
+    avatar?: string;
+  };
+  createdAt: string;
   initialLikes?: number;
   initialComments?: PostComment[];
+  imageUrl?: string;
 }
 
-export const Post: React.FC<PostProps> = ({
-  title,
-  content,
-  author,
-  timestamp,
-  imageUrl,
-  initialLikes = 0,
-  initialComments = [],
-}) => {
+interface PostProps {
+  post: PostType;
+}
+
+export const Post: React.FC<PostProps> = ({ post }) => {
   const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(initialLikes);
+  const [likes, setLikes] = useState(post.initialLikes || 0);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<PostComment[]>(initialComments);
+  const [comments, setComments] = useState<PostComment[]>(post.initialComments || []);
 
   const handleLike = () => {
     setLiked(!liked);
-    setLikes(prev => liked ? prev - 1 : prev + 1);
+    setLikes((prev: number) => liked ? prev - 1 : prev + 1);
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
   };
 
   const handleAddComment = (newCommentContent: string) => {
+    const currentUser = {
+      username: "YourUsername",
+      avatar: "YourAvatarURL"
+    };
+
     const comment: PostComment = {
       id: Date.now().toString(),
-      user: 'Current User', // This would come from auth context in a real app
+      user: currentUser.username,
       content: newCommentContent,
       timestamp: new Date().toLocaleString(),
+      userAvatar: currentUser.avatar,
+      isCurrentUser: true
     };
     setComments(prev => [...prev, comment]);
   };
 
-  // Generate initials for avatar
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (user: string | { username: string }) => {
+    const username = typeof user === 'string' ? user : user.username;
+    if (!username) return 'G';
+    return username
       .split(' ')
       .map(word => word[0])
       .join('')
-      .toUpperCase()
-      .slice(0, 2);
+      .toUpperCase();
+  };
+
+  const getUserAvatar = (user: string | { username: string; avatar?: string }): string | undefined => {
+    if (typeof user === 'string') {
+      return undefined;
+    }
+    return user.avatar;
   };
 
   return (
@@ -84,38 +116,52 @@ export const Post: React.FC<PostProps> = ({
         borderRadius: 2,
       }}
     >
-      {imageUrl && <CardMedia component="img" height="140" image={imageUrl} alt={title} />}
+      {post.imageUrl && (
+        <CardMedia
+          component="img"
+          sx={{
+            height: 350,
+            objectFit: 'cover',
+          }}
+          image={post.imageUrl}
+          alt={post.title}
+        />
+      )}
       <CardHeader
         avatar={
-          <Avatar sx={{ bgcolor: 'primary.main' }}>
-            {getInitials(author)}
+          <Avatar 
+            sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}
+            src={getUserAvatar(post.userID)}
+          >
+            {!getUserAvatar(post.userID) && getInitials(post.userID)}
           </Avatar>
         }
         title={
           <Typography variant="h6" component="h2" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-            {title}
+            {post.title}
           </Typography>
         }
         subheader={
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="body2" color="text.secondary">
-              {author}
+              {typeof post.userID === 'string' ? post.userID : post.userID.username}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               •
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {timestamp}
+              {formatTimestamp(post.createdAt)}
             </Typography>
           </Stack>
         }
       />
       <CardContent>
         <Typography variant="body1" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
-          {content}
+          {post.content}
         </Typography>
       </CardContent>
-      <CardActions disableSpacing>
+      
+      <CardActions>
         <IconButton 
           onClick={handleLike}
           color={liked ? 'primary' : 'default'}
@@ -140,10 +186,15 @@ export const Post: React.FC<PostProps> = ({
 
       <Divider />
       <CommentsSection 
-        comments={comments}
+        comments={comments.map(comment => ({
+          ...comment,
+          user: comment.isCurrentUser ? `${comment.user} (me)` : comment.user
+        }))}
         showComments={showComments}
         onAddComment={handleAddComment}
       />
     </Card>
   );
-}; 
+};
+
+export default Post; 
