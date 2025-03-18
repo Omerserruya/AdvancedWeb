@@ -16,10 +16,10 @@ import { IUser } from "../models/user_model";
  * @swagger
  * components:
  *   securitySchemes:
- *     ApiKeyAuth:
+ *     cookieAuth:
  *       type: apiKey
- *       in: header
- *       name: authorization
+ *       in: cookie
+ *       name: accessToken
  */
 
 /**
@@ -97,7 +97,7 @@ authRoute.post('/login', auth.login);
  *     summary: Logout a user
  *     tags: [Auth]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: User logged out successfully
@@ -115,7 +115,7 @@ authRoute.post('/logout', auth.logout);
  *     summary: Refresh the access token
  *     tags: [Auth]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: Token refreshed successfully
@@ -133,7 +133,7 @@ authRoute.post('/refresh', auth.refreshToken);
  *     summary: Test the authentication middleware
  *     tags: [Auth]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: Auth successful

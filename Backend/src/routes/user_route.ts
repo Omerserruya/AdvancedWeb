@@ -17,10 +17,10 @@ import fs from 'fs';
  * @swagger
  * components:
  *   securitySchemes:
- *     ApiKeyAuth:
+ *     cookieAuth:
  *       type: apiKey
- *       in: header
- *       name: authorization
+ *       in: cookie
+ *       name: accessToken
  *   schemas:
  *     User:
  *       type: object
@@ -51,7 +51,7 @@ import fs from 'fs';
  *     summary: Create a new user
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -106,7 +106,7 @@ usersRoute.get('/:id', userController.getUserById);
  *     summary: Update a user by ID
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -137,7 +137,7 @@ usersRoute.put('/:id', authentification, userController.updateUser);
  *     summary: Delete a user by ID
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -197,7 +197,7 @@ const upload = multer({
  *     summary: Upload a user avatar
  *     tags: [Users]
  *     security:
- *       - ApiKeyAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
