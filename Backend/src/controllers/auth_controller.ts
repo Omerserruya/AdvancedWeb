@@ -1,21 +1,36 @@
 import { NextFunction, Request, Response } from 'express';
 import userModel, { IUser } from '../models/user_model';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken';
 import createUserHelper from "./user_controller";
+import passport from 'passport';
 
-const generateToken = (userId: string, email: string, secret: string, expiresIn: string) => {
-    return jwt.sign(
-        {
-            email: email,
-            userId: userId,
-            random: Math.random().toString()
-        },
-        secret,
-        {
-            expiresIn: expiresIn,
-        }
-    );
+interface TokenPayload {
+    userId: string;
+    email: string;
+    nonce: string;
 }
+
+const generateToken = (
+    userId: string, 
+    email: string, 
+    secret: Secret, 
+    expiresIn: number | string
+): string => {
+    if (!secret) throw new Error('JWT secret is not defined');
+    
+    const payload: TokenPayload = {
+        userId,
+        email,
+        nonce: Math.random().toString()
+    };
+
+    const signOptions: SignOptions = {
+        expiresIn: expiresIn as jwt.SignOptions['expiresIn']
+    };
+
+    return jwt.sign(payload, secret, signOptions);
+};
+
 // Function for user registration
 const register = async (req: Request, res: Response)=> {
     const { username, email, password,role } = req.body;
@@ -53,15 +68,25 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         } else {
             const match = await user.comparePassword(password);
             if (match) {
-                const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
-                const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-                //user.tokens = [refreshToken];
+                const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as Secret, process.env.JWT_EXPIRES_IN as string);
+                const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as Secret, process.env.JWT_REFRESH_EXPIRES_IN as string);
+                
                 if (!user.tokens) user.tokens = [refreshToken];
                 else user.tokens.push(refreshToken);
                 await user.save();
-                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-                res.status(200).json({ message: 'Auth successful' }).redirect('/');
+
+                res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
+                res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' });
+                
+                // Return user data with the response
+                res.status(200).json({
+                    message: 'Auth successful',
+                    user: {
+                        _id: user._id,
+                        username: user.username,
+                        email: user.email,
+                    }
+                });
             }
             else {
                 res.status(401).json({ message: 'Auth failed' });
@@ -77,19 +102,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 const loginExternal = async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     try {
-      const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
-      const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
-      //user.tokens = [refreshToken];
-      if (!user.tokens) user.tokens = [refreshToken];
-      else user.tokens.push(refreshToken);
+      const token = generateToken(user._id as string, user.email, process.env.JWT_KEY as Secret, process.env.JWT_EXPIRES_IN as string);
+      const refreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as Secret, process.env.JWT_REFRESH_EXPIRES_IN as string);
+      
+      user.tokens = [refreshToken];
       await user.save();
-      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
-      res.status(200).json({ message: 'Auth successful' });
+      
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'none' });
+      
+      // Redirect to home page using relative path
+      res.redirect('/home');
     } catch (error) {
       next(error);
     }
-  };
+};
   
 
 // Logout a user - remove refreshToken from user
@@ -187,12 +214,12 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
                 await user.save();
                 return res.status(401).json({ message: 'Invalid request: Refresh token not found' });
             } else {
-                const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as string, process.env.JWT_EXPIRES_IN as string);
-                const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as string, process.env.JWT_REFRESH_EXPIRES_IN as string);
+                const newToken = generateToken(user._id as string, user.email, process.env.JWT_KEY as Secret, process.env.JWT_EXPIRES_IN as string);
+                const newRefreshToken = generateToken(user._id as string, user.email, process.env.JWT_REFRESH_KEY as Secret, process.env.JWT_REFRESH_EXPIRES_IN as string);
                 user.tokens[user.tokens.indexOf(refreshToken as string)] = newRefreshToken;
                 await user.save();
-                res.cookie('accessToken', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
-                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' , sameSite: 'none'});
+                res.cookie('accessToken', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
+                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod' , sameSite: 'none'});
                 return res.status(200).json({ message: 'Auth successful'});
             }
         } catch (error) {
@@ -204,4 +231,34 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
 const test = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'Test successful' });
 };
-export default { login, register, logout, refreshToken , test, loginExternal};
+
+const getCurrentUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId; // This should be set by your auth middleware
+        const user = await userModel.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user data' });
+    }
+};
+
+export default { 
+    login, 
+    register, 
+    logout, 
+    refreshToken, 
+    test, 
+    loginExternal,
+    getCurrentUser 
+};

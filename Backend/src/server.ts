@@ -1,6 +1,7 @@
 // Omer-Serruya-322570243-Ron-Elmalech-322766809
 import dotenv from "dotenv"
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import express, { Express } from "express";
@@ -13,6 +14,9 @@ import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import multer from 'multer';
+import { upload } from './utils/imageHandler'; // We'll create this
 
 
 const options = {
@@ -41,9 +45,9 @@ const specs = swaggerJsDoc(options);
 
 
 const app = express();
-
+// "http://node21.cs.colman.ac.il"
 const corsOptions = {
-  origin: 'http://localhost:3000', // Adjust this to your frontend URL
+  origin:"http://localhost", // Adjust this to your frontend URL
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 
@@ -70,20 +74,35 @@ app.use('/posts',postsRoute)
 app.use('/users',usersRoute)
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Error handling for file uploads
+
+
+const mongoOptions = {
+  user: process.env.MONGO_USER,          // MongoDB username
+  pass: process.env.MONGO_PASSWORD,      // MongoDB password
+  useNewUrlParser: true,     // Parse the URL using the new parser
+  useUnifiedTopology: true  // Use the new topology engine (recommended)
+};
+
 const initApp = () => {
   return new Promise<Express>((resolve, reject) => {
     if (!process.env.MONGODB_URL) {
       reject("DB_CONNECT is not defined in .env file");
     } else {
       mongoose
-        .connect(process.env.MONGODB_URL)
-        .then(() => {
-          resolve(app);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    }
+      .connect(process.env.MONGODB_URL,mongoOptions)
+      .then(() => {
+        console.log('MongoDB connection successful');
+        resolve(app);
+      })
+      .catch((error) => {
+        console.error('MongoDB connection error:', error);
+        reject(error);
+      });
+        }
   });
 };
 

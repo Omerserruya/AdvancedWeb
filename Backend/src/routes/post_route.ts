@@ -3,6 +3,7 @@ const postsRoute = express.Router();
 import postsController from "../controllers/post_controller";
 import { authentification } from "../controllers/auth_controller";
 import Comment from "../controllers/comment_controller";
+import upload from '../middleware/multer'; // Import the multer middleware
 
 /**
  * @swagger
@@ -71,7 +72,7 @@ import Comment from "../controllers/comment_controller";
  *       401:
  *         description: Unauthorized
  */
-postsRoute.post('/', authentification, postsController.addPost);
+postsRoute.post('/', upload.array('images'), authentification, postsController.addPost);
 
 /** 
  * @swagger

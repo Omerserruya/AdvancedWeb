@@ -1,20 +1,37 @@
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
-  content: {
-    type: String,
-    required: true,
-  },
   userID: {
     type: String,
-    required: true,
+    required: true
   },
   title: {
     type: String,
-    required: true,
+    required: true
   },
+  content: {
+    type: String,
+    required: true
+  },
+  images: [{
+    filename: String,
+    path: String,
+    originalname: String
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  // Add these if you want to track likes and comments
+  likes: {
+    type: Number,
+    default: 0
+  },
+  comments: [{
+    user: String,
+    content: String,
+    timestamp: Date
+  }]
 });
 
-const postModel = mongoose.model("Posts", postSchema);
-
-export default postModel;
+export default mongoose.model("Post", postSchema);

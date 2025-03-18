@@ -1,0 +1,39 @@
+
+services:
+  app-frontend:  # Named service for frontend
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    ports:
+      - "3000:3000"
+
+  app-backend:   # Named service for backend
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./Backend/src:/app/src
+      - ./Backend/package.json:/app/package.json
+      - ./Backend/tsconfig.json:/app/tsconfig.json
+      - ./Backend/.env.dev:/app/.env.dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # For host MongoDB connection
+    ports:
+      - "5000:5000"
+
+  app-nginx:     # Named service for nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - app-frontend
+      - app-backend

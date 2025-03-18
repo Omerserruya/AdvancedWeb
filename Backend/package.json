@@ -11,13 +11,16 @@
     "test:users": "tsc && NODE_ENV=test jest -i src/tests/users.test.ts --detectOpenHandles --forceExit  --coverage",
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
-    "devstart": "NODE_ENV=dev nodemon ./src/app.ts"
+    "devstart": "NODE_ENV=dev nodemon ./src/app.ts",
+    "prodstart": "tsc && NODE_ENV=prod node dist/src/app.js"
+
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/express-session": "^1.18.1",
+    "@types/multer": "^1.4.12",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
@@ -27,6 +30,7 @@
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.1",
+    "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.7",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",

@@ -211,6 +211,7 @@ describe("Auth Tests", () => {
 test("Test timeout token", async () => {
     const response = await request(app).post(baseUrl + "/login").send(testUser);
 
+
     expect(response.statusCode).toBe(200);
     
     expect(response.headers['set-cookie']).toBeDefined();
