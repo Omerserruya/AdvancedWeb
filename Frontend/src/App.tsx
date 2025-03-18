@@ -4,7 +4,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import AddPost from './pages/AddPost';
 import { UserProvider } from './contexts/UserContext';
 import OAuthCallback from './components/OAuthCallback';
 import { ThemeProvider } from './theme/ThemeProvider';
@@ -25,7 +24,6 @@ function App() {
           {/* Protected routes with Layout */}
           <Route element={<Layout />}>
             <Route path="/home" element={<Home />} />
-            <Route path="/add-post" element={<AddPost />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>

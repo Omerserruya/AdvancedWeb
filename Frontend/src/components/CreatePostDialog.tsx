@@ -1,33 +1,38 @@
-import React, { useState } from 'react';
-import { 
-  Container, 
-  TextField, 
-  Button, 
-  Typography, 
-  Box, 
-  Paper,
-  Stack,
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Box,
   IconButton,
+  Typography,
+  Stack,
   Alert,
   ImageList,
   ImageListItem,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteIcon from '@mui/icons-material/Delete';
-import axios from 'axios';
+import { Close as CloseIcon, CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import api from '../utils/api';
 
-const AddPost: React.FC = () => {
+interface CreatePostDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onPostCreated: () => void;
+}
+
+const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const navigate = useNavigate();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const newImages: File[] = [];
@@ -35,7 +40,7 @@ const AddPost: React.FC = () => {
       
       const filesArray = Array.from(files);
       
-      filesArray.forEach(file => {
+      filesArray.forEach((file: File) => {
         if (file.size > 5000000) { // 5MB limit
           setError('Each image should be less than 5MB');
           return;
@@ -49,16 +54,18 @@ const AddPost: React.FC = () => {
         
         const reader = new FileReader();
         reader.onloadend = () => {
-          newPreviews.push(reader.result as string);
-          if (newPreviews.length === filesArray.length) {
-            setImagePreviews([...imagePreviews, ...newPreviews]);
+          if (reader.result) {
+            newPreviews.push(reader.result as string);
+            if (newPreviews.length === filesArray.length) {
+              setImagePreviews([...imagePreviews, ...newPreviews]);
+            }
           }
         };
         reader.readAsDataURL(file);
       });
 
       setImages([...images, ...newImages]);
-      setError('');
+      setError(null);
     }
   };
 
@@ -67,7 +74,10 @@ const AddPost: React.FC = () => {
     setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
-  const handleAddPost = async () => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) return;
+
     setLoading(true);
     setError(null);
 
@@ -75,52 +85,74 @@ const AddPost: React.FC = () => {
     formData.append('title', title);
     formData.append('content', content);
     images.forEach((image) => {
-      formData.append('images', image); // Append each image file
+      formData.append('images', image);
     });
 
     try {
-      const response = await fetch('/api/posts', {
+      await fetch('/api/posts', {
         method: 'POST',
         body: formData,
-        credentials: 'include', // Ensure cookies are sent for authentication
+        credentials: 'include',
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to add post');
-      }
-
-      const newPost = await response.json();
-      console.log('Post created successfully:', newPost);
       
-      // Redirect to My Posts page after successful post creation
-      navigate('/my-posts');
+      setTitle('');
+      setContent('');
+      setImages([]);
+      setImagePreviews([]);
+      onPostCreated();
+      onClose();
     } catch (error) {
-      console.error('Error adding post:', error);
-      setError('Failed to add post. Please try again.');
+      console.error('Error creating post:', error);
+      setError('Failed to create post. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary">
-          Create New Post
-        </Typography>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+  const handleCancel = () => {
+    setTitle('');
+    setContent('');
+    setImages([]);
+    setImagePreviews([]);
+    setError(null);
+    onClose();
+  };
 
-        <form onSubmit={(e) => { e.preventDefault(); handleAddPost(); }}>
+  return (
+    <Dialog 
+      open={open} 
+      onClose={handleCancel}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        }
+      }}
+    >
+      <DialogTitle>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Typography variant="h6">Create New Post</Typography>
+          <IconButton onClick={handleCancel} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
+        <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
+            {error && (
+              <Alert severity="error">
+                {error}
+              </Alert>
+            )}
+
             <TextField
+              autoFocus
               label="Title"
-              variant="outlined"
               fullWidth
+              variant="outlined"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -134,10 +166,10 @@ const AddPost: React.FC = () => {
 
             <TextField
               label="Content"
-              variant="outlined"
-              fullWidth
               multiline
-              rows={6}
+              rows={4}
+              fullWidth
+              variant="outlined"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
@@ -147,6 +179,7 @@ const AddPost: React.FC = () => {
                   ? 'Content must be at least 10 characters long'
                   : ''
               }
+              placeholder="Share your thoughts..."
             />
 
             <Box>
@@ -169,7 +202,7 @@ const AddPost: React.FC = () => {
               </label>
 
               {imagePreviews.length > 0 && (
-                <ImageList sx={{ width: '100%', maxHeight: 400 }} cols={3} rowHeight={164}>
+                <ImageList sx={{ width: '100%', maxHeight: 400, mt: 2 }} cols={3} rowHeight={164}>
                   {imagePreviews.map((preview, index) => (
                     <ImageListItem key={index} sx={{ position: 'relative' }}>
                       <img
@@ -198,31 +231,39 @@ const AddPost: React.FC = () => {
                 </ImageList>
               )}
             </Box>
-
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                onClick={() => navigate('/')}
-              >
-                Cancel
-              </Button>
-              {loading ? (
-                <CircularProgress />
-              ) : (
-                <Button
-                  variant="contained"
-                  type="submit"
-                  disabled={!title.trim() || !content.trim()}
-                >
-                  Create Post
-                </Button>
-              )}
-            </Box>
           </Stack>
         </form>
-      </Paper>
-    </Container>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={handleCancel} color="inherit">
+          Cancel
+        </Button>
+        <Box sx={{ position: 'relative' }}>
+          <Button 
+            onClick={handleSubmit}
+            variant="contained" 
+            color="primary"
+            disabled={loading || !title.trim() || !content.trim() || 
+              title.trim().length < 3 || content.trim().length < 10}
+          >
+            {loading ? 'Creating...' : 'Create Post'}
+          </Button>
+          {loading && (
+            <CircularProgress
+              size={24}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                marginTop: '-12px',
+                marginLeft: '-12px',
+              }}
+            />
+          )}
+        </Box>
+      </DialogActions>
+    </Dialog>
   );
 };
 
-export default AddPost;
+export default CreatePostDialog; 
