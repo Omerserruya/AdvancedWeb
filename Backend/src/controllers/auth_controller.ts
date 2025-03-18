@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import userModel, { IUser } from '../models/user_model';
 import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken';
-import createUserHelper from "./user_controller";
+import userController from "./user_controller";
 import passport from 'passport';
 
 interface TokenPayload {
@@ -33,8 +33,9 @@ const generateToken = (
 
 // Function for user registration
 const register = async (req: Request, res: Response)=> {
-    const { username, email, password,role } = req.body;
-      req.body.isRegister = true;
+    const { username, email, password, role } = req.body;
+    req.body.isRegister = true;
+    
     // Validate required fields
     if (!username || !email || !password) {
         res.status(400).json({ message: "Username, email, and password are required" });
@@ -42,16 +43,15 @@ const register = async (req: Request, res: Response)=> {
     }
    
     try {
-        const user = await createUserHelper.addUser(req, res);
-        res.status(201).send(user);
-        return;
+        // Let userController.addUser handle the response
+        await userController.addUser(req, res);
+        // Don't send another response here
     } catch (error: any) {
+        // This will only run if userController.addUser throws but doesn't send a response
         if (error.message === "User already exists") {
             res.status(400).json({ message: error.message });
-            return;
         } else {
             res.status(500).json({ message: "Error during registration", error: error.message });
-            return;
         }
     }
 };
