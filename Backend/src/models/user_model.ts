@@ -1,20 +1,21 @@
-import mongoose from "mongoose";
-import bcrypt from 'bcrypt';
-import { Schema, Document, model } from 'mongoose';
+import mongoose, { Schema, Document, model } from "mongoose";
 import postModel from './post_model'; // Adjust path as needed
+import commentModel from './comment_model'; // Adjust path as needed
+import bcrypt from 'bcrypt';
 
+// Define the User interface
 export interface IUser extends Document {
+  username: string;
+  email: string;
   password?: string;
   githubId?: string;
   googleId?: string;
-  username: string;
-  email: string;
   avatarUrl: string;
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  tokens?: [String];
-  likedPosts?: [String];
+  tokens?: string[];
+  likedPosts?: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -73,7 +74,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Custom validation
+// Custom validation to ensure at least one of password, githubId, or googleId is present
 userSchema.pre('save', function (next) {
   if (this.isNew) {
     if (!this.password && !this.githubId && !this.googleId) {
@@ -93,7 +94,6 @@ userSchema.methods.comparePassword = async function (
       console.error('Password not found for user.');
       return false;
     }
-
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (err) {
     console.error('Error comparing passwords:', err);
@@ -101,21 +101,24 @@ userSchema.methods.comparePassword = async function (
   }
 };
 
-const userModel = model<IUser>('User', userSchema);
-
 // ================================
-// 🧹 Middleware to delete user's posts
+// 🧹 Middleware to delete user's posts when user is deleted
 // ================================
 userSchema.pre('findOneAndDelete', async function (next) {
   const query = this.getQuery();
   const userId = query._id;
 
   try {
+    // Delete all posts associated with this user
     await postModel.deleteMany({ userID: userId });
+
+    // Delete all comments where this user is the owner
+    await commentModel.deleteMany({userID : userId });
+
     next();
   } catch (err) {
     next(err as Error);
   }
 });
 
-export default userModel;
+export default model<IUser>("User", userSchema);

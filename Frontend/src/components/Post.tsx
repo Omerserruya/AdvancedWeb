@@ -40,6 +40,7 @@ import { useUser } from '../contexts/UserContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import UserAvatar from './UserAvatar';
+import Toast from '../components/Toast';
 
 interface PostImage {
   url: string;
@@ -97,6 +98,13 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
   
   // Get current user from context
   const { user: currentUser } = useUser();
+  
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
+  
+  // Add this missing state for edit loading
+  const [editLoading, setEditLoading] = useState(false);
   
   // Fetch user data if we only have the ID
   useEffect(() => {
@@ -316,7 +324,7 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
     return undefined;
   };
 
-  const handleEditImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     
     // Reset states first
@@ -327,14 +335,22 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
       const file = files[0];
       
       if (file.size > 5000000) { // 5MB limit
-        console.error('Image too large, maximum size is 5MB');
+        // Show toast notification
+        setToastMessage('Image too large! Maximum size is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+        
         // Reset the file input
         e.target.value = '';
         return;
       }
       
       if (!file.type.startsWith('image/')) {
-        console.error('Only image files are allowed');
+        // Show toast notification
+        setToastMessage('Only image files are allowed.');
+        setToastSeverity('error');
+        setToastOpen(true);
+        
         // Reset the file input
         e.target.value = '';
         return;
@@ -396,45 +412,47 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
 
   const handleEditSave = async () => {
     try {
-      // Create FormData for multipart/form-data submission
+      setEditLoading(true);
+      
+      // Create form data for the updated post
       const formData = new FormData();
       formData.append('title', editedTitle);
       formData.append('content', editedContent);
       
-      // Handle image changes
       if (editedImage) {
         formData.append('image', editedImage);
-      } else if (removeCurrentImage) {
-        // Add a flag to indicate image should be removed
-        formData.append('removeImage', 'true');
-      } else {
-        // Explicitly indicate we want to keep existing image (helps backend differentiate)
-        formData.append('keepExistingImage', 'true');
       }
       
-      // Make API request
+      formData.append('removeImage', removeCurrentImage.toString());
+      
       const response = await api.put(`/api/posts/${post._id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
-      // Get the updated post data from the response
-      const updatedPost = response.data;
-      
-      // Update the local post state with the response from the server
-      if (onEdit && updatedPost) {
-        onEdit(updatedPost);
+      // Update local state with the response data
+      if (onEdit) {
+        onEdit(response.data);
       }
       
-      // Reset edit states
       setIsEditing(false);
-      setEditedImage(null);
-      setEditedImagePreview(null);
-      setRemoveCurrentImage(false);
-      setShowPreview(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating post:', error);
+      
+      // Check for 413 error (Request Entity Too Large)
+      if (error.response && error.response.status === 413) {
+        setToastMessage('Image file size is too large for upload. Maximum size allowed is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+      } else {
+        // Generic error message for other errors
+        setToastMessage('Failed to update post. Please try again.');
+        setToastSeverity('error');
+        setToastOpen(true);
+      }
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -675,6 +693,10 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
       }, 100);
     }
   }, [isEditing]);
+
+  const handleToastClose = () => {
+    setToastOpen(false);
+  };
 
   return (
     <>
@@ -1010,6 +1032,14 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Toast notification */}
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        severity={toastSeverity}
+        onClose={handleToastClose}
+      />
     </>
   );
 };

@@ -9,6 +9,7 @@ import { Post } from '../components/Post';
 import api from '../utils/api';
 import UserAvatar from '../components/UserAvatar';
 import { useSearch } from '../contexts/SearchContext';
+import Toast from '../components/Toast';
 
 interface User {
   _id: string;
@@ -72,6 +73,11 @@ function Profile() {
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  // Add state for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
   
   // Ref for the loader element that will be observed
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -214,6 +220,19 @@ function Profile() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      
+      // Check file size - 5MB limit
+      if (file.size > 5000000) {
+        // Show toast notification
+        setToastMessage('Image too large! Maximum size is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+        
+        // Reset the file input
+        event.target.value = '';
+        return;
+      }
+      
       setSelectedFile(file);
       
       // Create preview
@@ -241,8 +260,20 @@ function Profile() {
       // Refresh user data after avatar upload to update UI in real-time
       await refreshUserDetails();
       handlePhotoDialogClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading photo:', error);
+      
+      // Check for 413 error (Request Entity Too Large)
+      if (error.response && error.response.status === 413) {
+        setToastMessage('Image file size is too large for upload. Maximum size allowed is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+      } else {
+        // Generic error message for other errors
+        setToastMessage('Failed to upload image. Please try again.');
+        setToastSeverity('error');
+        setToastOpen(true);
+      }
     }
   };
 
@@ -290,6 +321,36 @@ function Profile() {
       clearModifiedPosts();
     }
   }, [isSearchOpen, modifiedPosts, clearModifiedPosts]);
+
+  // Handle delete account
+  const handleDeleteAccount = async () => {
+    try {
+      setLoading(true);
+      const response = await api.delete(`/api/users/${user._id}`);
+      
+      if (response.status === 200) {
+        // Log the user out after deleting account
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        
+        // Clear user context and redirect to home
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      // You could add error handling/notification here
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  // Toast close handler
+  const handleToastClose = () => {
+    setToastOpen(false);
+  };
 
   if (!user) {
     return (
@@ -378,6 +439,23 @@ function Profile() {
             <Typography variant="h6">
               {new Date(user.createdAt || '').toLocaleDateString()}
             </Typography>
+          </Box>
+
+          {/* Add Delete Account button */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => setDeleteDialogOpen(true)}
+              sx={{
+                borderRadius: '20px',
+                textTransform: 'none',
+                fontSize: '14px',
+              }}
+            >
+              Delete Account
+            </Button>
           </Box>
         </Stack>
       </Paper>
@@ -487,6 +565,35 @@ function Profile() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Make sure the Delete Account Confirmation Dialog is added if not already present */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleDeleteAccount} 
+            variant="contained" 
+            color="error"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Delete Account'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Toast notification */}
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        severity={toastSeverity}
+        onClose={handleToastClose}
+      />
     </Box>
   );
 }

@@ -24,6 +24,7 @@ import {
 import api from '../utils/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Toast from '../components/Toast';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -43,6 +44,9 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -50,11 +54,26 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
       const file = files[0]; // Only take the first file
       
       if (file.size > 5000000) { // 5MB limit
-        setError('Image should be less than 5MB');
+        // Show toast notification
+        setToastMessage('Image too large! Maximum size is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+        
+        // Reset error state and file input
+        setError(null);
+        e.target.value = '';
         return;
       }
+      
       if (!file.type.startsWith('image/')) {
-        setError('Only image files are allowed');
+        // Show toast notification
+        setToastMessage('Only image files are allowed.');
+        setToastSeverity('error');
+        setToastOpen(true);
+        
+        // Reset error state and file input
+        setError(null);
+        e.target.value = '';
         return;
       }
       
@@ -147,33 +166,43 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     }
     
     setLoading(true);
-    setError(null);
-
+    
+    // Create form data for the new post
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
+    
     if (image) {
       formData.append('image', image);
     }
-
+    
     try {
-      // Using api utility (axios) instead of fetch for better cookie handling
-      const response = await api.post('/api/posts', formData, {
+      await api.post('/api/posts', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data', // Important for file uploads
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
+      // Reset form
       setTitle('');
       setContent('');
       setImage(null);
       setImagePreview(null);
+      setError(null);
       setFileInputKey(Date.now()); // Reset file input
       onPostCreated();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error);
-      setError('Failed to create post. Please try again.');
+      
+      // Check for 413 error (Request Entity Too Large)
+      if (error.response && error.response.status === 413) {
+        setToastMessage('Image file size is too large for upload. Maximum size allowed is 5MB.');
+        setToastSeverity('error');
+        setToastOpen(true);
+      } else {
+        setError('Failed to create post. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -187,6 +216,10 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
     setError(null);
     setFileInputKey(Date.now()); // Reset file input
     onClose();
+  };
+
+  const handleToastClose = () => {
+    setToastOpen(false);
   };
 
   return (
@@ -423,6 +456,14 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({ open, onClose, onPo
           )}
         </Box>
       </DialogActions>
+      
+      {/* Toast notification */}
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        severity={toastSeverity}
+        onClose={handleToastClose}
+      />
     </Dialog>
   );
 };
