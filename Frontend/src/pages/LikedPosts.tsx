@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Typography, Box, Grid, CircularProgress } from '@mui/material';
 import { Post } from '../components/Post';
 import { useUser } from '../contexts/UserContext';
+import { useSearch } from '../contexts/SearchContext';
 import api from '../utils/api';
 
 interface PostType {
@@ -38,6 +39,7 @@ interface PostType {
 
 const LikedPosts = () => {
   const { user } = useUser();
+  const { modifiedPosts, clearModifiedPosts, isSearchOpen } = useSearch();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +84,32 @@ const LikedPosts = () => {
       }
     };
   }, [handleObserver, posts.length]);
+
+  // Sync modifications from search
+  useEffect(() => {
+    if (!isSearchOpen && modifiedPosts.length > 0) {
+      setPosts(currentPosts => {
+        let updatedPosts = [...currentPosts];
+        
+        modifiedPosts.forEach(mod => {
+          if (mod.action === 'delete') {
+            // Remove deleted posts
+            updatedPosts = updatedPosts.filter(post => post._id !== mod.postId);
+          } else if (mod.action === 'edit' && mod.updatedData) {
+            // Update edited posts
+            updatedPosts = updatedPosts.map(post => 
+              post._id === mod.postId ? mod.updatedData : post
+            );
+          }
+        });
+        
+        return updatedPosts;
+      });
+      
+      // Clear the modifications tracker after applying changes
+      clearModifiedPosts();
+    }
+  }, [isSearchOpen, modifiedPosts, clearModifiedPosts]);
 
   const fetchLikedPosts = async () => {
     try {

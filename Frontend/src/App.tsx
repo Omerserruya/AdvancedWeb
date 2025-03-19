@@ -10,26 +10,29 @@ import Register from './pages/Register';
 import OAuthCallback from './components/OAuthCallback';
 import ScrollToTop from './components/ScrollToTop';
 import LikedPosts from './pages/LikedPosts';
+import { SearchProvider } from './contexts/SearchContext';
 
 function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <ScrollToTop />
-        <Routes>
-          {/* Auth routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<OAuthCallback />} />
-          
-          {/* Main routes */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/liked-posts" element={<LikedPosts />} />
-          </Route>
-        </Routes>
+        <SearchProvider>
+          <ScrollToTop />
+          <Routes>
+            {/* Auth routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
+            
+            {/* Main routes */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/liked-posts" element={<LikedPosts />} />
+            </Route>
+          </Routes>
+        </SearchProvider>
       </UserProvider>
     </ThemeProvider>
   );
