@@ -13,12 +13,14 @@ import {
   CardContent,
   IconButton,
   Divider,
+  Card,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import { StyledBackground, StyledCard, SocialButton } from '../styles/AuthStyles';
+import { StyledBackground, SocialButton } from '../styles/AuthStyles';
+import { styled, Theme } from '@mui/material/styles';
 
 interface RegisterFormData {
   username: string;
@@ -26,6 +28,16 @@ interface RegisterFormData {
   password: string;
   confirmPassword: string;
 }
+
+const StyledCard = styled(Card)(({ theme }: { theme: Theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.palette.mode === 'dark' 
+    ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+    : '0 4px 20px rgba(0, 0, 0, 0.1)',
+  borderRadius: 16,
+  width: '100%',
+  padding: theme.spacing(4),
+}));
 
 const Register = () => {
   const navigate = useNavigate();

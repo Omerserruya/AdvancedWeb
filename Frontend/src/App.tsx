@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import { UserProvider } from './contexts/UserContext';
-import { ThemeProvider } from './theme/ThemeProvider';
+import ThemeProvider from './theme/ThemeProvider';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';

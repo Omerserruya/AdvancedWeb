@@ -18,14 +18,47 @@ import { useNavigate } from 'react-router-dom';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { StyledBackground, StyledCard, SocialButton } from '../styles/AuthStyles';
+import { StyledBackground, SocialButton } from '../styles/AuthStyles';
 import { useUser } from '../contexts/UserContext';
 import { User } from '../contexts/UserContext';
+import { styled } from '@mui/material/styles';
+import Card from '@mui/material/Card';
+import { Theme } from '@mui/material/styles';
+import { gray } from '../shared-theme/themePrimitives';
 
 interface LoginFormData {
   email: string;
   password: string;
 }
+
+const StyledCard = styled(Card)(({ theme }: { theme: Theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.palette.mode === 'dark' 
+    ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+    : '0 4px 20px rgba(0, 0, 0, 0.1)',
+  borderRadius: 16,
+  width: '100%',
+  padding: theme.spacing(4),
+}));
+
+const StyledTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
+  marginBottom: theme.spacing(2),
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.background.paper,
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? gray[700] : gray[300]
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? gray[600] : gray[400]
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.mode === 'dark' ? gray[400] : 'inherit'
+  },
+  '& .MuiInputBase-input': {
+    color: theme.palette.text.primary
+  }
+}));
 
 const Login = () => {
   const navigate = useNavigate();
@@ -192,7 +225,7 @@ const Login = () => {
             </Box>
 
             <Box component="form" onSubmit={handleSubmit}>
-              <TextField
+              <StyledTextField
                 margin="normal"
                 required
                 fullWidth
@@ -207,9 +240,8 @@ const Login = () => {
                 }
                 error={!!errors.email}
                 helperText={errors.email}
-                sx={{ mb: 2 }}
               />
-              <TextField
+              <StyledTextField
                 margin="normal"
                 required
                 fullWidth
@@ -224,7 +256,6 @@ const Login = () => {
                 }
                 error={!!errors.password}
                 helperText={errors.password}
-                sx={{ mb: 2 }}
               />
 
               <Button

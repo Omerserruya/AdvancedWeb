@@ -1,5 +1,8 @@
 import { styled } from '@mui/material/styles';
 import { Card, Button } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import { gray } from '../shared-theme/themePrimitives';
 
 export const StyledBackground = styled('div')({
   position: 'fixed',
@@ -39,13 +42,14 @@ export const StyledBackground = styled('div')({
   },
 });
 
-export const StyledCard = styled(Card)(({ theme }) => ({
-  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-  borderRadius: '24px',
+export const StyledCard = styled(Card)(({ theme }: { theme: Theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.palette.mode === 'dark' 
+    ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+    : '0 4px 20px rgba(0, 0, 0, 0.1)',
+  borderRadius: 24,
   padding: theme.spacing(3),
-  background: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  width: '100%',
   transition: 'transform 0.2s ease-in-out',
   '&:hover': {
     transform: 'translateY(-5px)',
@@ -63,4 +67,23 @@ export const SocialButton = styled(Button)(({ theme }) => ({
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
   },
+}));
+
+export const StyledTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
+  marginBottom: theme.spacing(2),
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.background.paper,
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? gray[700] : gray[300]
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? gray[600] : gray[400]
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.mode === 'dark' ? gray[400] : 'inherit'
+  },
+  '& .MuiInputBase-input': {
+    color: theme.palette.text.primary
+  }
 })); 
