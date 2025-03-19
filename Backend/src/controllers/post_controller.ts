@@ -65,6 +65,7 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
     const userIDFilter = req.query.userID;
     const likedFilter = req.query.liked === 'true';
     const userId = req.params.userId; // Current user ID from auth middleware
+    const searchQuery = req.query.search as string;
     
     // Build query
     let query: any = {};
@@ -79,6 +80,15 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
       // We need to fetch posts where the current user's ID is in the likes array
       const userObjectId = new mongoose.Types.ObjectId(userId);
       query.likes = userObjectId;
+    }
+
+    // Add search functionality
+    if (searchQuery) {
+      // Search in title and content using regex for case-insensitive search
+      query.$or = [
+        { title: { $regex: searchQuery, $options: 'i' } },
+        { content: { $regex: searchQuery, $options: 'i' } }
+      ];
     }
  
     // Execute query with pagination and populate userID with user data

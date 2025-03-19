@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Typography, Box, Grid, Button, CircularProgress } from '@mui/material';
 import { Post } from '../components/Post';
 import { useUser } from '../contexts/UserContext';
+import { useSearch } from '../contexts/SearchContext';
 import AddIcon from '@mui/icons-material/Add';
 import api from '../utils/api';
 import CreatePostDialog from '../components/CreatePostDialog';
@@ -40,6 +41,7 @@ interface PostType {
 
 const Home = () => {
   const { user } = useUser();
+  const { modifiedPosts, clearModifiedPosts, isSearchOpen } = useSearch();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,35 @@ const Home = () => {
       }
     };
   }, [handleObserver, posts.length]);
+
+  // Run this effect when search closes to sync post modifications
+  useEffect(() => {
+    if (!isSearchOpen && modifiedPosts.length > 0) {
+      // Apply modifications from search to the main posts list
+      setPosts(currentPosts => {
+        // Create a copy of current posts
+        let updatedPosts = [...currentPosts];
+        
+        // Apply each modification
+        modifiedPosts.forEach(mod => {
+          if (mod.action === 'delete') {
+            // Remove deleted posts
+            updatedPosts = updatedPosts.filter(post => post._id !== mod.postId);
+          } else if (mod.action === 'edit' && mod.updatedData) {
+            // Update edited posts
+            updatedPosts = updatedPosts.map(post => 
+              post._id === mod.postId ? mod.updatedData : post
+            );
+          }
+        });
+        
+        return updatedPosts;
+      });
+      
+      // Clear the modifications tracker after applying changes
+      clearModifiedPosts();
+    }
+  }, [isSearchOpen, modifiedPosts, clearModifiedPosts]);
 
   const fetchPosts = async () => {
     try {
