@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost',
+  baseURL: 'https://node21.cs.colman.ac.il',
   withCredentials: true, // This is crucial for sending cookies
 });
 

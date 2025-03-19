@@ -27,7 +27,7 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost/api" }],
+    servers: [{ url: "http://node21.cs.colman.ac.il/api" }],
     components: {
       securitySchemes: {
         cookieAuth: {
@@ -47,7 +47,7 @@ const specs = swaggerJsDoc(options);
 const app = express();
 // "http://node21.cs.colman.ac.il"
 const corsOptions = {
-  origin:"http://localhost", // Adjust this to your frontend URL
+  origin:"http://node21.cs.colman.ac.il", // Adjust this to your frontend URL
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 

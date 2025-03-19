@@ -12,7 +12,7 @@
     "start": "tsc && node dist/src/app.js",
     "lint": "eslint . --ext .ts",
     "devstart": "NODE_ENV=dev nodemon ./src/app.ts",
-    "prodstart": "tsc && NODE_ENV=prod node dist/src/app.js"
+    "prodstart": "tsc && NODE_ENV=production node dist/src/app.js"
   },
   "keywords": [],
   "author": "",

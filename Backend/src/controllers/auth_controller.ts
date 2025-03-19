@@ -78,14 +78,14 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 // Update cookie settings for better compatibility with nginx
                 res.cookie('accessToken', token, { 
                     httpOnly: true, 
-                    secure: process.env.NODE_ENV === 'prod',
+                    secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',  // Changed from 'none' to 'lax' for better browser compatibility
                     path: '/',        // Explicitly set the path
                 });
                 
                 res.cookie('refreshToken', refreshToken, { 
                     httpOnly: true, 
-                    secure: process.env.NODE_ENV === 'prod',
+                    secure: process.env.V === 'production',
                     sameSite: 'lax',  // Changed from 'none' to 'lax'
                     path: '/',        // Explicitly set the path
                 });
@@ -129,8 +129,8 @@ const loginExternal = async (req: Request, res: Response, next: NextFunction) =>
       user.tokens = [refreshToken];
       await user.save();
       
-      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'lax' });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'prod', sameSite: 'lax' });
+      res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
       
       // Redirect to home page using relative path
       res.redirect(`/auth/callback?userId=${user._id}&username=${encodeURIComponent(user.username)}&email=${user.email}&role=${user.role}&createdAt=${user.createdAt}`);
@@ -247,14 +247,14 @@ const refreshToken = async (req: Request, res: Response, next: any) => {
                 // Update cookie settings for better compatibility with nginx
                 res.cookie('accessToken', newToken, { 
                     httpOnly: true, 
-                    secure: process.env.NODE_ENV === 'prod',
+                    secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',  // Changed from 'none' to 'lax'
                     path: '/',        // Explicitly set the path
                 });
                 
                 res.cookie('refreshToken', newRefreshToken, { 
                     httpOnly: true, 
-                    secure: process.env.NODE_ENV === 'prod',
+                    secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',  // Changed from 'none' to 'lax'
                     path: '/',        // Explicitly set the path
                 });
