@@ -735,6 +735,11 @@ export const Post: React.FC<PostProps> = ({ post, isOwner = false, onDelete, onE
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="body2" color="text.secondary">
                 {getUsername()}
+                {isOwner && (
+                  <Typography component="span" variant="caption" sx={{ ml: 0.5, fontWeight: 400, color: 'text.secondary' }}>
+                    (You)
+                  </Typography>
+                )}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 •

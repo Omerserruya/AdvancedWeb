@@ -22,9 +22,8 @@ export interface IUser extends Document {
 const userSchema: Schema<IUser> = new mongoose.Schema({
   username: {
     type: String,
-    required: true,
-    unique: true
-  },
+    required: true
+    },
   email: {
     type: String,
     required: true,
