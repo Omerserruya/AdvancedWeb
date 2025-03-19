@@ -80,7 +80,7 @@ describe("Comments Tests", () => {
 
     expect(response.statusCode).toBe(201);
     expect(response.body.content).toBe("Test Comment");
-    expect(response.body.userID).toBe(testUser._id);
+    expect(response.body.userID._id).toBe(testUser._id);
     commentId = response.body._id;
   });
 

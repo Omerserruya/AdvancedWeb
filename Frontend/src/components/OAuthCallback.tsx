@@ -7,8 +7,7 @@ const OAuthCallback = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { setUser } = useUser();
-
-  const processedRef = useRef(false); 
+  const processedRef = useRef(false);
 
   useEffect(() => {
     if (processedRef.current) return; 
@@ -18,6 +17,7 @@ const OAuthCallback = () => {
     
     const errorParam = params.get('error');
     if (errorParam) {
+      // For all errors, immediately redirect to login with error param
       navigate(`/login?error=${errorParam}`);
       return;
     }
@@ -37,7 +37,6 @@ const OAuthCallback = () => {
         createdAt: createdAt ? new Date(createdAt) : new Date(),
         updatedAt: new Date(),
       };
-
 
       setUser(userObj);
       navigate('/home');

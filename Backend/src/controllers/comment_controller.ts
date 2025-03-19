@@ -118,8 +118,10 @@ const deleteComment = async (req: Request, res: Response) => {
       res.status(404).json({ message: 'Comment not found' });
       return;
     }
-    
-    // Delete the comment
+    if(comment.userID.toString() !== req.params.userId){
+      res.status(403).json({ message: 'Access denied' });
+      return;
+    }    
     await Comment.findByIdAndDelete(commentID);
     
     // Decrement the post's commentsCount

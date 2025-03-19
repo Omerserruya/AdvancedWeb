@@ -7,18 +7,10 @@ import mongoose from "mongoose";
 
 const addPost = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('addPost called');
-    console.log('Request body:', req.body);
-    console.log('Request params:', req.params);
-    console.log('Request file:', req.file);
     
     const { title, content } = req.body;
     const userId = req.params.userId;
-    
-    console.log('userId from req.params:', userId);
-    console.log('title:', title);
-    console.log('content:', content);
-    
+
     if (!userId) {
       console.error('No userId found in request');
       res.status(400).json({
@@ -31,7 +23,6 @@ const addPost = async (req: Request, res: Response): Promise<void> => {
     let imageUrl = null;
     
     if (req.file) {
-      console.log('File uploaded:', req.file.filename);
       // Process the uploaded file
       const file = req.file as Express.Multer.File;
       
@@ -39,9 +30,7 @@ const addPost = async (req: Request, res: Response): Promise<void> => {
         url: `/api/uploads/posts/${userId}/${file.filename}`,
         filename: file.filename
       };
-      
-      console.log('Image URL object:', imageUrl);
-    }
+      }
     
     // Create post with image (if any)
     const postData = {
@@ -52,15 +41,13 @@ const addPost = async (req: Request, res: Response): Promise<void> => {
       createdAt: new Date()
     };
     
-    console.log('Creating post with data:', postData);
     
     const post = await postModel.create(postData);
-    console.log('Post created successfully:', post._id);
     
     res.status(201).json(post);
   } catch (error) {
     console.error('Error creating post:', error);
-    res.status(500).json({
+    res.status(400).json({
       message: "Error creating post",
       error: (error as any).message
     });
@@ -74,15 +61,36 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const skip = (page - 1) * limit;
     
-    // Extract filter parameter
+    // Extract filter parameters
     const userIDFilter = req.query.userID;
+    const likedFilter = req.query.liked === 'true';
+    const userId = req.params.userId; // Current user ID from auth middleware
+    const searchQuery = req.query.search as string;
     
     // Build query
-    let query = userIDFilter ? { userID: userIDFilter } : {};
+    let query: any = {};
     
-    console.log(`Fetching posts with pagination: limit=${limit}, page=${page}, skip=${skip}`);
-    console.log(`Filter: ${JSON.stringify(query)}`);
+    // Filter by user ID if provided
+    if (userIDFilter) {
+      query.userID = userIDFilter;
+    }
     
+    // Filter for posts liked by the current user
+    if (likedFilter && userId) {
+      // We need to fetch posts where the current user's ID is in the likes array
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      query.likes = userObjectId;
+    }
+
+    // Add search functionality
+    if (searchQuery) {
+      // Search in title and content using regex for case-insensitive search
+      query.$or = [
+        { title: { $regex: searchQuery, $options: 'i' } },
+        { content: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+ 
     // Execute query with pagination and populate userID with user data
     const posts = await postModel.find(query)
       .populate({
@@ -217,7 +225,6 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
           const oldImgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
           if (fs.existsSync(oldImgPath)) {
             fs.unlinkSync(oldImgPath);
-            console.log('Previous image deleted successfully');
           }
         } catch (err) {
           console.error(`Error deleting previous image:`, err);
@@ -249,7 +256,6 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
           const imgPath = path.join('/app/uploads/posts', postUserId, post.image.filename);
           if (fs.existsSync(imgPath)) {
             fs.unlinkSync(imgPath);
-            console.log('Image removed successfully');
           }
         } catch (err) {
           console.error(`Error deleting image during removal:`, err);
@@ -257,7 +263,6 @@ const updatePost = async (req: Request, res: Response): Promise<void> => {
       }
     }
     
-    console.log('Updating post with data:', updateData);
     
     const updatedPost = await postModel.findByIdAndUpdate(
       id,

@@ -8,6 +8,7 @@ import { useUser } from '../contexts/UserContext';
 import { Post } from '../components/Post';
 import api from '../utils/api';
 import UserAvatar from '../components/UserAvatar';
+import { useSearch } from '../contexts/SearchContext';
 
 interface User {
   _id: string;
@@ -54,6 +55,8 @@ function Profile() {
   const { user: contextUser, refreshUserDetails } = useUser();
   // Use type assertion to add avatarUrl property
   const user = contextUser as User;
+  // Add the search context to sync modifications
+  const { modifiedPosts, clearModifiedPosts, isSearchOpen } = useSearch();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   // Pagination state
@@ -254,8 +257,6 @@ function Profile() {
   };
 
   const handleUpdatePost = (updatedPost: any) => {
-    console.log('Handling updated post in Profile:', updatedPost);
-    
     // Update the local posts state with the server response
     setPosts(currentPosts => 
       currentPosts.map(post => 
@@ -263,6 +264,32 @@ function Profile() {
       )
     );
   };
+
+  // Effect to sync modifications from search
+  useEffect(() => {
+    if (!isSearchOpen && modifiedPosts.length > 0) {
+      setPosts(currentPosts => {
+        let updatedPosts = [...currentPosts];
+        
+        modifiedPosts.forEach(mod => {
+          if (mod.action === 'delete') {
+            // Remove deleted posts
+            updatedPosts = updatedPosts.filter(post => post._id !== mod.postId);
+          } else if (mod.action === 'edit' && mod.updatedData) {
+            // Update edited posts
+            updatedPosts = updatedPosts.map(post => 
+              post._id === mod.postId ? mod.updatedData : post
+            );
+          }
+        });
+        
+        return updatedPosts;
+      });
+      
+      // Clear the modifications tracker after applying changes
+      clearModifiedPosts();
+    }
+  }, [isSearchOpen, modifiedPosts, clearModifiedPosts]);
 
   if (!user) {
     return (
@@ -385,6 +412,10 @@ function Profile() {
                     isOwner={user?._id === (typeof post.userID === 'string' ? post.userID : post.userID._id)}
                     onDelete={() => handleDeletePost(post._id)}
                     onEdit={(updatedPost) => handleUpdatePost(updatedPost as PostType)}
+                    onLikeChange={(postId, isLiked) => {
+                      // In My Posts page, we don't need to remove posts when unliked
+                      // as this page shows posts created by the user, not liked by the user
+                    }}
                   />
                 </Grid>
               ))

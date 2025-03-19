@@ -1,8 +1,6 @@
 import * as React from 'react';
 import Stack from '@mui/material/Stack';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import NavbarBreadcrumbs from './NavbarBreadcrumbs';
-import MenuButton from './MenuButton';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
 import Search from './Search';
 import { Box } from '@mui/material';
@@ -33,9 +31,6 @@ export default function Header() {
         <NavbarBreadcrumbs />
         <Stack direction="row" spacing={1.5}>
           <Search />
-          <MenuButton showBadge aria-label="Open notifications">
-            <NotificationsRoundedIcon />
-          </MenuButton>
           <ColorModeIconDropdown />
         </Stack>
       </Stack>

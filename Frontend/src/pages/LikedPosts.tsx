@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Typography, Box, Grid, Button, CircularProgress } from '@mui/material';
+import { Typography, Box, Grid, CircularProgress } from '@mui/material';
 import { Post } from '../components/Post';
 import { useUser } from '../contexts/UserContext';
 import { useSearch } from '../contexts/SearchContext';
-import AddIcon from '@mui/icons-material/Add';
 import api from '../utils/api';
-import CreatePostDialog from '../components/CreatePostDialog';
 
 interface PostType {
   _id: string;
@@ -39,13 +37,12 @@ interface PostType {
   }>;
 }
 
-const Home = () => {
+const LikedPosts = () => {
   const { user } = useUser();
   const { modifiedPosts, clearModifiedPosts, isSearchOpen } = useSearch();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -57,7 +54,7 @@ const Home = () => {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchPosts();
+    fetchLikedPosts();
   }, []);
   
   // Setup intersection observer for infinite scroll
@@ -88,15 +85,12 @@ const Home = () => {
     };
   }, [handleObserver, posts.length]);
 
-  // Run this effect when search closes to sync post modifications
+  // Sync modifications from search
   useEffect(() => {
     if (!isSearchOpen && modifiedPosts.length > 0) {
-      // Apply modifications from search to the main posts list
       setPosts(currentPosts => {
-        // Create a copy of current posts
         let updatedPosts = [...currentPosts];
         
-        // Apply each modification
         modifiedPosts.forEach(mod => {
           if (mod.action === 'delete') {
             // Remove deleted posts
@@ -117,20 +111,20 @@ const Home = () => {
     }
   }, [isSearchOpen, modifiedPosts, clearModifiedPosts]);
 
-  const fetchPosts = async () => {
+  const fetchLikedPosts = async () => {
     try {
       setLoading(true);
       setError(null);
       // Reset pagination when fetching posts initially
       setPage(1);
       
-      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=1`);
+      // Get posts where the current user ID is in the 'likes' array
+      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=1&liked=true`);
       
-      // Extract posts from the new response format
+      // Extract posts from the response format
       const postsData = response.data.data || [];
       const paginationInfo = response.data.pagination;
       
-      // No need to sort as backend is already sorting by newest first
       setPosts(postsData);
       
       // Use pagination info from the response
@@ -141,8 +135,8 @@ const Home = () => {
         setHasMore(postsData.length === postsPerPage);
       }
     } catch (err) {
-      setError('Failed to load posts. Please try again later.');
-      console.error('Error fetching posts:', err);
+      setError('Failed to load liked posts. Please try again later.');
+      console.error('Error fetching liked posts:', err);
     } finally {
       setLoading(false);
     }
@@ -155,9 +149,9 @@ const Home = () => {
       setLoadingMore(true);
       const nextPage = page + 1;
       
-      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=${nextPage}`);
+      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=${nextPage}&liked=true`);
       
-      // Extract posts from the new response format
+      // Extract posts from the response format
       const postsData = response.data.data || [];
       const paginationInfo = response.data.pagination;
       
@@ -176,7 +170,7 @@ const Home = () => {
         setHasMore(false);
       }
     } catch (error) {
-      console.error('Error loading more posts:', error);
+      console.error('Error loading more liked posts:', error);
     } finally {
       setLoadingMore(false);
     }
@@ -201,59 +195,28 @@ const Home = () => {
     );
   };
 
+  // Handle post like state change
+  const handleLikeChange = (postId: string, isLiked: boolean) => {
+    // If a post is unliked, remove it from the liked posts list
+    if (!isLiked) {
+      setPosts(currentPosts => currentPosts.filter(post => post._id !== postId));
+    }
+  };
+
   return (
     <Box>
-      {/* Welcome Section */}
+      {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Welcome back, {user?.username || 'User'}!
+          Posts You Like
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-          Stay updated with the latest in tech
+          See all the posts you've liked
         </Typography>
-      </Box>
-
-      {/* Tech Talk Section */}
-      <Box 
-        sx={{ 
-          mb: 4, 
-          background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
-          color: 'white', 
-          p: 3, 
-          borderRadius: 2,
-          boxShadow: 2,
-          maxWidth: 800,
-          width: '100%'
-        }}
-      >
-        <Typography variant="h5" gutterBottom>
-          Tech Talk
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Join the conversation about the latest technologies, share your insights, and learn from others.
-        </Typography>
-        <Button 
-          variant="contained" 
-          sx={{ 
-            bgcolor: 'white',
-            color: 'primary.main',
-            '&:hover': {
-              bgcolor: 'grey.100'
-            }
-          }}
-          startIcon={<AddIcon />}
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
-          Create Post
-        </Button>
       </Box>
 
       {/* Posts Feed */}
       <Box>
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Latest Posts
-        </Typography>
-        
         {loading ? (
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
@@ -264,7 +227,7 @@ const Home = () => {
           </Typography>
         ) : posts.length === 0 ? (
           <Typography variant="body1" color="text.secondary" align="center">
-            No posts yet. Be the first to share something!
+            You haven't liked any posts yet. Visit the homepage to discover content you might like!
           </Typography>
         ) : (
           <>
@@ -276,40 +239,21 @@ const Home = () => {
                     isOwner={user?._id === (typeof post.userID === 'string' ? post.userID : post.userID._id)}
                     onDelete={() => handleDeletePost(post._id)}
                     onEdit={(updatedPost) => handleUpdatePost(updatedPost as PostType)}
-                    onLikeChange={(postId, isLiked) => {
-                      // In Home page, we don't need to remove posts when unliked,
-                      // but we might want to handle real-time updates in the future
-                    }}
+                    onLikeChange={handleLikeChange}
                   />
                 </Grid>
               ))}
             </Grid>
             
-            {/* Infinite scroll loader - shows at the bottom when more posts are loading */}
-            <Box 
-              ref={loaderRef} 
-              display="flex" 
-              justifyContent="center" 
-              mt={4} 
-              mb={2}
-              height="50px"
-              alignItems="center"
-            >
-              {loadingMore && hasMore && (
-                <CircularProgress size={30} />
-              )}
+            {/* Loader element for infinite scroll */}
+            <Box ref={loaderRef} display="flex" justifyContent="center" p={2} mt={2}>
+              {loadingMore && <CircularProgress size={30} />}
             </Box>
           </>
         )}
       </Box>
-
-      <CreatePostDialog
-        open={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        onPostCreated={fetchPosts}
-      />
     </Box>
   );
 };
 
-export default Home; 
+export default LikedPosts; 

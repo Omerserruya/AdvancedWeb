@@ -59,7 +59,7 @@ describe("Posts Tests", () => {
   test("Posts test get all", async () => {
     const response = await request(app).get("/posts");
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(0);
+    expect(response.body.data.length).toBe(0);
   });
 
   test("Test Create Post", async () => {
@@ -93,7 +93,7 @@ describe("Posts Tests", () => {
   test("Test Get Posts with Filter", async () => {
     const response = await request(app).get("/posts").query({ userID: testUser._id });
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBeGreaterThanOrEqual(0);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(0);
   });
 
   test("Test Get Posts - Error", async () => {
@@ -284,7 +284,7 @@ describe("Posts Tests", () => {
         userID: otherUser._id,
       });
     expect(response.statusCode).toBe(403);
-    expect(response.text).toBe("Access denied");
+    expect(response.body.message).toBe("Access denied");
   });
   
   test("Test update post - error", async () => {

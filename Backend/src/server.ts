@@ -27,14 +27,14 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:3000" }],
+    servers: [{ url: "http://localhost/api" }],
     components: {
       securitySchemes: {
-        ApiKeyAuth: {
+        cookieAuth: {
           type: "apiKey",
-          in: "header",
-          name: "authorization",
-          description: "Enter your token here (without Bearer prefix)"
+          in: "cookie",
+          name: "accessToken",
+          description: "Authentication uses HTTP cookies. No need to manually enter anything here - just login through the /auth/login endpoint."
         }
       },
     }
@@ -96,7 +96,6 @@ const initApp = () => {
       mongoose
       .connect(process.env.MONGODB_URL,mongoOptions)
       .then(() => {
-        console.log('MongoDB connection successful');
         resolve(app);
       })
       .catch((error) => {
