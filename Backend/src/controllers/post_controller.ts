@@ -61,36 +61,15 @@ const getPost = async (req: Request, res: Response): Promise<void> => {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const skip = (page - 1) * limit;
     
-    // Extract filter parameters
+    // Extract filter parameter
     const userIDFilter = req.query.userID;
-    const likedFilter = req.query.liked === 'true';
-    const userId = req.params.userId; // Current user ID from auth middleware
-    const searchQuery = req.query.search as string;
     
     // Build query
-    let query: any = {};
+    let query = userIDFilter ? { userID: userIDFilter } : {};
     
-    // Filter by user ID if provided
-    if (userIDFilter) {
-      query.userID = userIDFilter;
-    }
+    console.log(`Fetching posts with pagination: limit=${limit}, page=${page}, skip=${skip}`);
+    console.log(`Filter: ${JSON.stringify(query)}`);
     
-    // Filter for posts liked by the current user
-    if (likedFilter && userId) {
-      // We need to fetch posts where the current user's ID is in the likes array
-      const userObjectId = new mongoose.Types.ObjectId(userId);
-      query.likes = userObjectId;
-    }
-
-    // Add search functionality
-    if (searchQuery) {
-      // Search in title and content using regex for case-insensitive search
-      query.$or = [
-        { title: { $regex: searchQuery, $options: 'i' } },
-        { content: { $regex: searchQuery, $options: 'i' } }
-      ];
-    }
- 
     // Execute query with pagination and populate userID with user data
     const posts = await postModel.find(query)
       .populate({
@@ -566,7 +545,90 @@ const updatePostMetadata = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+// Get liked posts - specific endpoint for liked posts
+const getLikedPosts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Extract pagination parameters
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const skip = (page - 1) * limit;
+    
+    const userId = req.params.userId; // Current user ID from auth middleware
+    const searchQuery = req.query.search as string;
+    
+    if (!userId) {
+      res.status(400).json({
+        message: "Missing user ID in request. Authentication required."
+      });
+      return;
+    }
+    
+    // Build query
+    let query: any = {};
+    
+    try {
+      // Get the user's likedPosts array
+      const user = await userModel.findById(userId);
+      if (user && user.likedPosts && user.likedPosts.length > 0) {
+        // Convert strings to ObjectIds if necessary
+        const postIds = user.likedPosts.map((id) => 
+          typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id);
+        
+        // Filter posts by their IDs
+        query._id = { $in: postIds };
+      } else {
+        // If user has no liked posts, return empty result
+        query._id = { $in: [] };
+      }
+    } catch (error) {
+      console.error('Error getting liked posts:', error);
+      // If there's an error, return empty result
+      query._id = { $in: [] };
+    }
+
+    // Add search functionality
+    if (searchQuery) {
+      // Search in title and content using regex for case-insensitive search
+      query.$or = [
+        { title: { $regex: searchQuery, $options: 'i' } },
+        { content: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+ 
+    // Execute query with pagination and populate userID with user data
+    const posts = await postModel.find(query)
+      .populate({
+        path: 'userID',
+        select: 'username avatarUrl'
+      })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(skip)
+      .limit(limit);
+      
+    // Get total count for pagination info
+    const total = await postModel.countDocuments(query);
+    
+    res.json({
+      data: posts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + posts.length < total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching liked posts:', error);
+    res.status(500).json({
+      message: "Error fetching liked posts",
+      error: (error as any).message
+    });
+  }
+};
+
 export default { 
+  getLikedPosts,
   addPost, 
   getPost, 
   getPostById, 

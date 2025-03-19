@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import commentModel from './comment_model'; // Adjust path if needed
 
 const postSchema = new mongoose.Schema({
   userID: {
@@ -22,17 +23,14 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  // Replace likes count with an array of user IDs
   likes: {
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of user IDs who liked the post
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     default: []
   },
-  // Track count for performance reasons
   likesCount: {
     type: Number,
     default: 0
   },
-  // Track count of comments for performance reasons
   commentsCount: {
     type: Number,
     default: 0
@@ -42,6 +40,19 @@ const postSchema = new mongoose.Schema({
     content: String,
     timestamp: Date
   }]
+});
+
+// Middleware to delete comments when a post is deleted
+postSchema.pre('findOneAndDelete', async function (next: (arg0: Error | undefined) => void) {
+  const query = this.getQuery();
+  const postId = query._id;
+
+  try {
+    await commentModel.deleteMany({ postID: postId });
+    next(undefined);
+  } catch (err) {
+    next(err as Error);
+  }
 });
 
 export default mongoose.model("Post", postSchema);

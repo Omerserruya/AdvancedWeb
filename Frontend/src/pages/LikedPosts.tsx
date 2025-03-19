@@ -119,7 +119,7 @@ const LikedPosts = () => {
       setPage(1);
       
       // Get posts where the current user ID is in the 'likes' array
-      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=1&liked=true`);
+      const response = await api.get(`/api/posts/liked?limit=${postsPerPage}&page=1`);
       
       // Extract posts from the response format
       const postsData = response.data.data || [];
@@ -149,7 +149,7 @@ const LikedPosts = () => {
       setLoadingMore(true);
       const nextPage = page + 1;
       
-      const response = await api.get(`/api/posts?limit=${postsPerPage}&page=${nextPage}&liked=true`);
+      const response = await api.get(`/api/posts/liked?limit=${postsPerPage}&page=${nextPage}`);
       
       // Extract posts from the response format
       const postsData = response.data.data || [];

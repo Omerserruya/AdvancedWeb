@@ -15,9 +15,8 @@ const upload = multer({
 // Helper function to create a new user
 const createUserHelper = async (username: string, email: string, password: string, role?: string) => {
   const existingEmail = await userModel.findOne({ email });
-  const existingUsername = await userModel.findOne({ username });
 
-  if (existingEmail || existingUsername) {
+  if (existingEmail ) {
     throw new Error("User already exists");
   }
 

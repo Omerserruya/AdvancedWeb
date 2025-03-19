@@ -100,6 +100,24 @@ postsRoute.get('/', postsController.getPost);
 
 /**
  * @swagger
+ * /posts/liked:
+ *   get:
+ *     summary: Get all posts liked by the current user
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of posts liked by the user
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Error retrieving liked posts
+ */
+postsRoute.get('/liked', authentification, postsController.getLikedPosts);
+
+/**
+ * @swagger
  * /posts/{id}:
  *   get:
  *     summary: Get a post by ID

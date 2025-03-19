@@ -1,7 +1,7 @@
-// User model (UserModel.ts)
 import mongoose from "mongoose";
 import bcrypt from 'bcrypt';
-import { Schema, Document, model} from 'mongoose';
+import { Schema, Document, model } from 'mongoose';
+import postModel from './post_model'; // Adjust path as needed
 
 export interface IUser extends Document {
   password?: string;
@@ -14,9 +14,8 @@ export interface IUser extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   tokens?: [String];
-  likedPosts?: [String]; // Array of post IDs liked by the user
+  likedPosts?: [String];
   comparePassword(candidatePassword: string): Promise<boolean>;
-  
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
@@ -43,7 +42,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
   avatarUrl: {
     type: String,
-    default: '', // Empty string as default
+    default: '',
     required: false
   },
   githubId: {
@@ -74,17 +73,17 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Custom validation to ensure at least one of password, githubId, or googleId is present
+// Custom validation
 userSchema.pre('save', function (next) {
-  // Check if it's a new document (i.e., being created)
   if (this.isNew) {
-    // Custom validation to ensure at least one of password, githubId, or googleId is present
     if (!this.password && !this.githubId && !this.googleId) {
       this.invalidate('password', 'At least one of password, githubId, or googleId is required.');
     }
   }
   next();
 });
+
+// Compare Password Method
 userSchema.methods.comparePassword = async function (
   this: IUser,
   candidatePassword: string
@@ -92,7 +91,7 @@ userSchema.methods.comparePassword = async function (
   try {
     if (!this.password) {
       console.error('Password not found for user.');
-      return false; 
+      return false;
     }
 
     return await bcrypt.compare(candidatePassword, this.password);
@@ -101,5 +100,22 @@ userSchema.methods.comparePassword = async function (
     return false;
   }
 };
+
 const userModel = model<IUser>('User', userSchema);
+
+// ================================
+// 🧹 Middleware to delete user's posts
+// ================================
+userSchema.pre('findOneAndDelete', async function (next) {
+  const query = this.getQuery();
+  const userId = query._id;
+
+  try {
+    await postModel.deleteMany({ userID: userId });
+    next();
+  } catch (err) {
+    next(err as Error);
+  }
+});
+
 export default userModel;
